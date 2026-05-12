@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Invoice Shop{% endblock %}</title>
+<style>
+  :root {
+    --primary: #1a1a2e;
+    --accent: #4f46e5;
+    --accent-light: #818cf8;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  
+  /* NAVBAR */
+  .navbar {
+    background: var(--primary);
+    color: white;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .navbar .brand { font-size: 1.3rem; font-weight: 700; letter-spacing: 1px; color: white; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+  .navbar .brand span { color: var(--accent-light); }
+  .nav-links { display: flex; align-items: center; gap: 1rem; }
+  .nav-links a { color: rgba(255,255,255,0.8); text-decoration: none; padding: 6px 14px; border-radius: 6px; font-size: 0.9rem; transition: all 0.2s; }
+  .nav-links a:hover { background: rgba(255,255,255,0.15); color: white; }
+  .nav-links .btn-new { background: var(--accent); color: white !important; font-weight: 600; }
+  .nav-links .btn-new:hover { background: #4338ca !important; }
+  .nav-user { color: rgba(255,255,255,0.6); font-size: 0.85rem; }
+
+  /* CONTAINER */
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+  
+  /* CARDS */
+  .card { background: var(--card); border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,0.08); padding: 1.5rem; }
+  
+  /* MESSAGES */
+  .messages { margin-bottom: 1.5rem; }
+  .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 8px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+  .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+  
+  /* FORMS */
+  .form-group { margin-bottom: 1.2rem; }
+  .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-control { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.95rem; transition: border-color 0.2s; outline: none; background: white; }
+  .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+  
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #4338ca; transform: translateY(-1px); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-success:hover { background: #16a34a; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-warning { background: var(--warning); color: white; }
+  .btn-warning:hover { background: #d97706; }
+  .btn-outline { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
+  .btn-outline:hover { background: var(--accent); color: white; }
+  .btn-sm { padding: 5px 12px; font-size: 0.82rem; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; }
+  th { background: var(--primary); color: white; padding: 12px 14px; text-align: left; font-size: 0.82rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  tr:hover td { background: #f8fafc; }
+  .actions { display: flex; gap: 6px; }
+
+  /* PAGE HEADER */
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .page-title { font-size: 1.6rem; font-weight: 700; color: var(--primary); }
+  .page-subtitle { color: var(--muted); font-size: 0.9rem; margin-top: 2px; }
+
+  /* BADGE */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  
+  /* AUTH PAGES */
+  .auth-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+  .auth-card { background: white; border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+  .auth-logo { text-align: center; margin-bottom: 2rem; }
+  .auth-logo h1 { font-size: 2rem; color: var(--primary); font-weight: 800; }
+  .auth-logo h1 span { color: var(--accent); }
+  .auth-logo p { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+  .auth-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--primary); }
+  .auth-link { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--muted); }
+  .auth-link a { color: var(--accent); font-weight: 600; text-decoration: none; }
+</style>
+{% block extra_style %}{% endblock %}
+</head>
+<body>
+{% if user.is_authenticated %}
+<nav class="navbar">
+  <a class="brand" href="/">📄 Invoice<span>Shop</span></a>
+  <div class="nav-links">
+    <span class="nav-user">👤 {{ user.username }}</span>
+    <a href="{% url 'create_invoice' %}" class="btn-new">+ New Invoice</a>
+    <a href="{% url 'logout' %}">Logout</a>
+  </div>
+</nav>
+{% endif %}
+
+<div class="{% if user.is_authenticated %}container{% endif %}">
+  {% if messages %}
+  <div class="messages">
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</div>
+</body>
+</html>
