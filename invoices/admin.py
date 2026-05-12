@@ -13,3 +13,9 @@ class InvoiceAdmin(admin.ModelAdmin):
 @admin.register(InvoiceItem)
 class InvoiceItemAdmin(admin.ModelAdmin):
     list_display = ['invoice', 'sr_no', 'product_name', 'quantity', 'unit_price', 'amount']
+
+from .models import UserProduct
+@admin.register(UserProduct)
+class UserProductAdmin(admin.ModelAdmin):
+    list_display = ['product_name', 'unit_price', 'user', 'created_at']
+    list_filter = ['user']

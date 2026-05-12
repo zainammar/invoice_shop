@@ -1,0 +1,107 @@
+{% extends 'invoices/base.html' %}
+{% block title %}My Products — Invoice Shop{% endblock %}
+{% block extra_style %}
+<style>
+  .product-grid { display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; }
+  .add-card { background: white; border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,0.08); padding: 1.5rem; height: fit-content; position: sticky; top: 80px; }
+  .price-badge { font-weight: 700; color: #4f46e5; font-size: 1rem; }
+  .empty-state { text-align: center; padding: 3rem 1rem; }
+  .tip-box { background: linear-gradient(135deg,#eff6ff,#e0e7ff); border: 1px solid #bfdbfe; border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #1e40af; }
+  .product-count { background: var(--accent); color: white; border-radius: 20px; padding: 2px 10px; font-size: 0.78rem; font-weight: 700; margin-left: 8px; }
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">📦 My Product Catalog</h1>
+    <p class="page-subtitle">Add your products once — use them in every invoice</p>
+  </div>
+  <a href="{% url 'dashboard' %}" class="btn btn-outline">← Dashboard</a>
+</div>
+
+<div class="tip-box">
+  💡 <strong>Tip:</strong> Yahan apne products ek baar add karein (name + price). Invoice banate waqt sirf dropdown se select karein — price automatically fill ho jayega!
+</div>
+
+<div class="product-grid">
+
+  <!-- ADD FORM -->
+  <div class="add-card">
+    <h3 style="font-size:1.05rem;font-weight:700;color:#1a1a2e;margin-bottom:1.2rem;display:flex;align-items:center;gap:8px;">
+      ➕ Add New Product
+    </h3>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Product / Service Name *</label>
+        <input type="text" name="product_name" class="form-control" placeholder="e.g. Web Design, Laptop, Printing..." required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Unit Price (Rs.) *</label>
+        <input type="number" name="unit_price" class="form-control" placeholder="e.g. 5000" min="0" step="0.01" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+        💾 Save Product
+      </button>
+    </form>
+  </div>
+
+  <!-- PRODUCT LIST -->
+  <div class="card">
+    <h3 style="font-size:1.05rem;font-weight:700;color:#1a1a2e;margin-bottom:1rem;">
+      Saved Products
+      <span class="product-count">{{ products.count }}</span>
+    </h3>
+
+    {% if products %}
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th>Product / Service Name</th>
+            <th style="width:160px;">Unit Price</th>
+            <th style="width:140px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+          <tr>
+            <td style="color:#94a3b8;font-size:0.82rem;">{{ forloop.counter }}</td>
+            <td>
+              <strong>{{ product.product_name }}</strong>
+              <div style="font-size:0.78rem;color:#94a3b8;margin-top:2px;">Added {{ product.created_at|date:"d M Y" }}</div>
+            </td>
+            <td class="price-badge">Rs. {{ product.unit_price|floatformat:2 }}</td>
+            <td>
+              <div class="actions">
+                <a href="{% url 'edit_product' product.pk %}" class="btn btn-warning btn-sm">✏️ Edit</a>
+                <form method="post" action="{% url 'delete_product' product.pk %}" style="display:inline;" onsubmit="return confirm('Delete this product?')">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger btn-sm">🗑</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div style="font-size:3.5rem;margin-bottom:0.8rem;">📦</div>
+      <h4 style="color:#1e293b;margin-bottom:0.4rem;">No products yet</h4>
+      <p style="color:#64748b;font-size:0.9rem;">Add your first product using the form on the left</p>
+    </div>
+    {% endif %}
+
+    {% if products %}
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #f1f5f9;text-align:center;">
+      <a href="{% url 'create_invoice' %}" class="btn btn-primary">📄 Create Invoice with These Products →</a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
