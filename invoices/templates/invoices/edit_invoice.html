@@ -99,11 +99,8 @@
 </form>
 
 <script>
-const productMap = {
-  {% for p in products %}
-  "{{ p.id }}": { name: "{{ p.product_name|escapejs }}", price: {{ p.unit_price }} },
-  {% endfor %}
-};
+// ✅ Safe JSON — no trailing commas, no Decimal type, no quote-breaking
+const productMap = JSON.parse("{{ products_json|escapejs }}");
 
 function onProductSelect(sel) {
   const tr = sel.closest('tr');

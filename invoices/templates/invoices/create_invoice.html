@@ -51,10 +51,11 @@
         <textarea name="customer_address" class="form-control" rows="3" placeholder="Customer address..."></textarea>
       </div>
     </div>
+
     <div class="card" style="display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#1a1a2e,#0f3460);color:white;gap:0.5rem;">
       <div style="font-size:3.5rem;">📄</div>
       <div style="font-size:1.1rem;font-weight:700;">New Invoice</div>
-      <div style="opacity:0.5;font-size:0.8rem;">{% now "d M Y" %}</div>
+      <div style="opacity:0.5;font-size:0.8rem;" id="invoiceDateDisplay"></div>
       <div style="margin-top:0.8rem;background:rgba(255,255,255,0.1);border-radius:8px;padding:0.6rem 1rem;font-size:0.82rem;text-align:center;">
         📦 {{ products.count }} product{{ products.count|pluralize }} in catalog
       </div>
@@ -83,7 +84,7 @@
               <select class="prod-select" onchange="onProductSelect(this)">
                 <option value="">— Select product —</option>
                 {% for p in products %}
-                <option value="{{ p.id }}" data-price="{{ p.unit_price }}" data-name="{{ p.product_name }}">{{ p.product_name }} — Rs. {{ p.unit_price }}</option>
+                <option value="{{ p.id }}" data-price="{{ p.unit_price }}" data-name="{{ p.product_name|escapejs }}">{{ p.product_name }} — Rs. {{ p.unit_price }}</option>
                 {% endfor %}
               </select>
               <input type="text" name="product_name[]" class="pname" placeholder="Or type product name" style="margin-top:4px;" required>
@@ -110,12 +111,16 @@
 </form>
 
 <script>
-// Build product map from Django template
-const productMap = {
-  {% for p in products %}
-  "{{ p.id }}": { name: "{{ p.product_name|escapejs }}", price: {{ p.unit_price }} },
-  {% endfor %}
-};
+
+(function() {
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const d = new Date();
+  document.getElementById('invoiceDateDisplay').textContent =
+    d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+})();
+
+// ── Fix 2: Product map built safely via JSON (handles quotes/special chars) ──
+const productMap = JSON.parse('{{ products_json|escapejs }}');
 
 function onProductSelect(sel) {
   const tr = sel.closest('tr');
@@ -127,23 +132,26 @@ function onProductSelect(sel) {
   } else {
     tr.querySelector('.pid').value = '';
   }
-  calcRow(tr); calcTotal();
+  calcRow(tr);
+  calcTotal();
+}
+
+function buildOptions() {
+  return '<option value="">— Select product —</option>' +
+    Object.entries(productMap).map(([id, p]) =>
+      `<option value="${id}">${p.name.replace(/</g,'&lt;')} — Rs. ${p.price}</option>`
+    ).join('');
 }
 
 function addRow() {
   const tbody = document.getElementById('itemsBody');
   const rowNum = tbody.querySelectorAll('tr').length + 1;
-  const opts = Object.entries(productMap).map(([id, p]) =>
-    `<option value="${id}" data-price="${p.price}" data-name="${p.name}">${p.name} — Rs. ${p.price}</option>`
-  ).join('');
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td class="sr-cell">${rowNum}</td>
     <td>
       <input type="hidden" name="product_id[]" class="pid" value="">
-      <select class="prod-select" onchange="onProductSelect(this)">
-        <option value="">— Select product —</option>${opts}
-      </select>
+      <select class="prod-select" onchange="onProductSelect(this)">${buildOptions()}</select>
       <input type="text" name="product_name[]" class="pname" placeholder="Or type product name" style="margin-top:4px;" required>
     </td>
     <td><input type="number" name="quantity[]" class="qty" value="1" min="1" required></td>
@@ -159,7 +167,8 @@ function removeRow(btn) {
   const rows = document.querySelectorAll('#itemsBody tr');
   if (rows.length > 1) {
     btn.closest('tr').remove();
-    updateSR(); calcTotal();
+    updateSR();
+    calcTotal();
   }
 }
 
@@ -170,19 +179,26 @@ function updateSR() {
 }
 
 function calcRow(tr) {
-  const qty = parseFloat(tr.querySelector('.qty').value) || 0;
+  const qty   = parseFloat(tr.querySelector('.qty').value)   || 0;
   const price = parseFloat(tr.querySelector('.price').value) || 0;
   tr.querySelector('.amount').value = (qty * price).toFixed(2);
 }
 
+// ── Fix 3: Safe number formatting (no locale dependency) ──
+function formatRs(num) {
+  return 'Rs. ' + num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
 function calcTotal() {
   let total = 0;
-  document.querySelectorAll('.amount').forEach(el => total += parseFloat(el.value) || 0);
-  document.getElementById('grandTotal').textContent = 'Rs. ' + total.toLocaleString('en-PK', {minimumFractionDigits:2});
+  document.querySelectorAll('.amount').forEach(el => {
+    total += parseFloat(el.value) || 0;
+  });
+  document.getElementById('grandTotal').textContent = formatRs(total);
 }
 
 function attachListeners(tr) {
-  tr.querySelector('.qty').addEventListener('input', () => { calcRow(tr); calcTotal(); });
+  tr.querySelector('.qty').addEventListener('input',   () => { calcRow(tr); calcTotal(); });
   tr.querySelector('.price').addEventListener('input', () => { calcRow(tr); calcTotal(); });
 }
 

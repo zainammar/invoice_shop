@@ -37,6 +37,7 @@ TEMPLATES = [{
             'django.template.context_processors.request',
             'django.contrib.auth.context_processors.auth',
             'django.contrib.messages.context_processors.messages',
+            'invoices.context_processors.company_profile',
         ],
     },
 }]
@@ -56,3 +57,7 @@ TIME_ZONE = 'Asia/Karachi'
 USE_I18N = True
 USE_TZ = True
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
+import os
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

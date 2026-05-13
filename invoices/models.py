@@ -51,3 +51,18 @@ class InvoiceItem(models.Model):
 
     def __str__(self):
         return f"{self.sr_no}. {self.product_name}"
+
+
+class CompanyProfile(models.Model):
+    """One company profile per user"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='company')
+    company_name = models.CharField(max_length=200, default='My Company')
+    company_logo = models.ImageField(upload_to='logos/company/', blank=True, null=True)
+    user_avatar = models.ImageField(upload_to='logos/avatars/', blank=True, null=True)
+    phone = models.CharField(max_length=50, blank=True)
+    email = models.CharField(max_length=200, blank=True)
+    address = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.company_name} ({self.user.username})"

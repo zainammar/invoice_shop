@@ -17,4 +17,6 @@ urlpatterns = [
     path('invoice/<int:pk>/edit/', views.edit_invoice, name='edit_invoice'),
     path('invoice/<int:pk>/delete/', views.delete_invoice, name='delete_invoice'),
     path('invoice/<int:pk>/pdf/', views.download_pdf, name='download_pdf'),
+    # Profile & Logo Settings
+    path('settings/', views.profile_settings, name='profile_settings'),
 ]

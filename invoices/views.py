@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
-from .models import Invoice, InvoiceItem, UserProduct
+from .models import Invoice, InvoiceItem, UserProduct, CompanyProfile
 import json, uuid
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -166,7 +166,15 @@ def create_invoice(request):
         messages.success(request, f'Invoice {invoice_number} created!')
         return redirect('invoice_detail', pk=invoice.pk)
 
-    return render(request, 'invoices/create_invoice.html', {'products': products})
+    # Build safe JSON for JS — avoids Decimal/trailing-comma/special-char issues
+    products_json_data = json.dumps({
+        str(p.id): {'name': p.product_name, 'price': float(p.unit_price)}
+        for p in products
+    })
+    return render(request, 'invoices/create_invoice.html', {
+        'products': products,
+        'products_json': products_json_data,
+    })
 
 
 @login_required
@@ -212,7 +220,15 @@ def edit_invoice(request, pk):
         messages.success(request, 'Invoice updated!')
         return redirect('invoice_detail', pk=invoice.pk)
 
-    return render(request, 'invoices/edit_invoice.html', {'invoice': invoice, 'products': products})
+    products_json_data = json.dumps({
+        str(p.id): {'name': p.product_name, 'price': float(p.unit_price)}
+        for p in products
+    })
+    return render(request, 'invoices/edit_invoice.html', {
+        'invoice': invoice,
+        'products': products,
+        'products_json': products_json_data,
+    })
 
 
 @login_required
@@ -319,3 +335,37 @@ def download_pdf(request, pk):
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="Invoice_{invoice.invoice_number}.pdf"'
     return response
+
+
+# ─── Company Profile / Logo Settings ────────────────────
+@login_required
+def profile_settings(request):
+    """Upload company logo + user avatar"""
+    profile, _ = CompanyProfile.objects.get_or_create(
+        user=request.user,
+        defaults={'company_name': request.user.username + "'s Company"}
+    )
+    if request.method == 'POST':
+        profile.company_name = request.POST.get('company_name', profile.company_name)
+        profile.phone = request.POST.get('phone', '')
+        profile.email = request.POST.get('email', '')
+        profile.address = request.POST.get('address', '')
+
+        if 'company_logo' in request.FILES:
+            # Delete old file
+            if profile.company_logo:
+                try: profile.company_logo.delete(save=False)
+                except: pass
+            profile.company_logo = request.FILES['company_logo']
+
+        if 'user_avatar' in request.FILES:
+            if profile.user_avatar:
+                try: profile.user_avatar.delete(save=False)
+                except: pass
+            profile.user_avatar = request.FILES['user_avatar']
+
+        profile.save()
+        messages.success(request, 'Profile & logos updated successfully!')
+        return redirect('profile_settings')
+
+    return render(request, 'invoices/profile_settings.html', {'profile': profile})

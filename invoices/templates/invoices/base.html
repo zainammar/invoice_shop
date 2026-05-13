@@ -13,25 +13,199 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-  .navbar { background: var(--primary); color: white; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; box-shadow: 0 2px 12px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100; }
-  .navbar .brand { font-size: 1.3rem; font-weight: 700; letter-spacing: 1px; color: white; text-decoration: none; }
-  .navbar .brand span { color: var(--accent-light); }
-  .nav-links { display: flex; align-items: center; gap: 0.5rem; }
-  .nav-links a { color: rgba(255,255,255,0.8); text-decoration: none; padding: 6px 14px; border-radius: 6px; font-size: 0.9rem; transition: all 0.2s; }
-  .nav-links a:hover, .nav-links a.active { background: rgba(255,255,255,0.15); color: white; }
-  .nav-links .btn-new { background: var(--accent); color: white !important; font-weight: 600; }
+
+  /* ── NAVBAR ── */
+  .navbar {
+    background: var(--primary);
+    color: white;
+    padding: 0 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.25);
+    position: sticky; top: 0; z-index: 100;
+  }
+
+  /* Company Brand / Logo */
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: white;
+    min-width: 0;
+  }
+  .brand-logo-img {
+    height: 40px; width: 40px; border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.2);
+    flex-shrink: 0;
+  }
+  .brand-logo-placeholder {
+    height: 40px; width: 40px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.15);
+  }
+  .brand-text { display: flex; flex-direction: column; line-height: 1.15; }
+  .brand-text .company-name {
+    font-size: 1rem; font-weight: 700; letter-spacing: 0.3px;
+    color: white; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; max-width: 200px;
+  }
+  .brand-text .brand-sub { font-size: 0.68rem; color: var(--accent-light); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+
+  /* Nav links */
+  .nav-links { display: flex; align-items: center; gap: 4px; }
+  .nav-links a { color: rgba(255,255,255,0.78); text-decoration: none; padding: 6px 13px; border-radius: 7px; font-size: 0.88rem; transition: all 0.18s; white-space: nowrap; }
+  .nav-links a:hover, .nav-links a.active { background: rgba(255,255,255,0.14); color: white; }
+  .nav-links .btn-new { background: var(--accent); color: white !important; font-weight: 600; padding: 7px 16px; }
   .nav-links .btn-new:hover { background: #4338ca !important; }
-  .nav-user { color: rgba(255,255,255,0.5); font-size: 0.85rem; padding: 0 8px; border-right: 1px solid rgba(255,255,255,0.15); margin-right: 4px; }
+  /* Grid */
+
+/* GRID */
+
+  /* Grid Content */
+  .content-grid {
+    display: grid;
+    gap: 10px;
+  }
+  
+ 
+
+
+  .grid-container {
+    display: grid;
+    grid-template-columns: 200px 300px; /* First column 200px, second column 300px */
+
+    
+  }
+  
+  .grid-item-1 {
+    padding:10px;
+    text-align: center;  
+  }
+  
+  .grid-item-2 {
+    padding:10px;
+    text-align: left;  
+  }
+  
+  /* Mobile First - 1 column for all rows */
+  .row-1, .row-2, .row-3, .row-4 {
+    display: grid;
+   
+    
+   
+  }
+  
+  /* Desktop View */
+  @media screen and (min-width: 768px) {
+  
+    /* 1 column, 1 row (remains the same) */
+    .row-1 {
+        grid-template-columns: 1fr;
+       
+    }
+  
+    /* 2 columns, 1 row */
+    .row-2 {
+        grid-template-columns: 1fr 1fr;
+        
+        
+    }
+  
+    /* 3 columns, 1 row */
+    .row-3 {
+        grid-template-columns: 1fr 1fr 1fr;
+       
+    }
+  
+    /* 4 columns, 1 row */
+    .row-4 {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+       
+    }
+  
+    /* 5 columns, 1 row */
+    .row-5 {
+      grid-template-columns: 1fr 2fr 1fr 1fr;
+     
+  }
+
+      /*6 columns, 1 row */
+      .row-6 {
+        grid-template-columns: 1fr 3fr 1fr;
+       
+    }
+
+        /*6 columns, 1 row */
+        .row-7 {
+          grid-template-columns: 1fr 2fr 2fr 1fr;
+         
+      }
+
+       /*6 columns, 1 row */
+       .row-8 {
+        grid-template-columns: 2fr 2fr;
+       
+    }
+
+
+  }
+  
+  
+  .grid-item img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+  /* User Avatar chip */
+  .user-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 30px; padding: 4px 12px 4px 4px;
+    text-decoration: none; color: white;
+    transition: background 0.2s;
+    margin-right: 4px;
+  }
+  .user-chip:hover { background: rgba(255,255,255,0.16); }
+  .user-avatar-img {
+    width: 30px; height: 30px; border-radius: 50%;
+    object-fit: cover; border: 2px solid rgba(255,255,255,0.25);
+    flex-shrink: 0;
+  }
+  .user-logo-img {
+    width: 60px; height: 60px; border-radius: 50%;
+    object-fit: cover; border: 2px solid rgba(255,255,255,0.25);
+    flex-shrink: 0;
+  }
+  .user-avatar-placeholder {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; font-weight: 700; color: white;
+    flex-shrink: 0; border: 2px solid rgba(255,255,255,0.2);
+    text-transform: uppercase;
+  }
+  .user-chip-name { font-size: 0.83rem; font-weight: 600; }
+
+  /* ── LAYOUT ── */
   .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
   .card { background: var(--card); border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,0.08); padding: 1.5rem; }
   .messages { margin-bottom: 1.5rem; }
   .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 8px; font-size: 0.9rem; }
   .alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
   .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+  /* ── FORMS ── */
   .form-group { margin-bottom: 1.2rem; }
   .form-group label { display: block; font-size: 0.82rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
   .form-control { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.95rem; transition: border-color 0.2s; outline: none; }
   .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+
+  /* ── BUTTONS ── */
   .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: all 0.2s; }
   .btn-primary { background: var(--accent); color: white; }
   .btn-primary:hover { background: #4338ca; }
@@ -44,6 +218,8 @@
   .btn-outline { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); }
   .btn-outline:hover { background: var(--accent); color: white; }
   .btn-sm { padding: 5px 12px; font-size: 0.82rem; }
+
+  /* ── TABLE ── */
   table { width: 100%; border-collapse: collapse; }
   th { background: var(--primary); color: white; padding: 12px 14px; text-align: left; font-size: 0.82rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
   td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
@@ -56,6 +232,8 @@
   .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
   .badge-blue { background: #dbeafe; color: #1e40af; }
   .badge-green { background: #dcfce7; color: #166534; }
+
+  /* ── AUTH PAGES ── */
   .auth-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
   .auth-card { background: white; border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
   .auth-logo { text-align: center; margin-bottom: 2rem; }
@@ -68,18 +246,47 @@
 {% block extra_style %}{% endblock %}
 </head>
 <body>
+
 {% if user.is_authenticated %}
 <nav class="navbar">
-  <a class="brand" href="/">📄 Invoice<span>Shop</span></a>
+
+  <!-- ── LEFT: Company Logo + Name ── -->
+  <a class="brand" href="{% url 'dashboard' %}">
+    {% if company_profile and company_profile.company_logo %}
+      <img src="{{ company_profile.company_logo.url }}" alt="Logo" class="brand-logo-img">
+    {% else %}
+      <div class="brand-logo-placeholder">📄</div>
+    {% endif %}
+    <div class="brand-text">
+      <span class="company-name">
+        {% if company_profile %}{{ company_profile.company_name }}{% else %}Invoice Shop{% endif %}
+      </span>
+      <span class="brand-sub">Invoice Shop</span>
+    </div>
+  </a>
+
+  <!-- ── RIGHT: Nav Links + User Avatar ── -->
   <div class="nav-links">
-    <span class="nav-user">👤 {{ user.username }}</span>
     <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>🏠 Dashboard</a>
-    <a href="{% url 'products' %}" {% if 'product' in request.resolver_match.url_name %}class="active"{% endif %}>📦 My Products</a>
+    <a href="{% url 'products' %}" {% if 'product' in request.resolver_match.url_name %}class="active"{% endif %}>📦 Products</a>
     <a href="{% url 'create_invoice' %}" class="btn-new">+ New Invoice</a>
-    <a href="{% url 'logout' %}">Logout</a>
+
+    <!-- User Avatar Chip -->
+    <a href="{% url 'profile_settings' %}" class="user-chip" title="Profile & Logo Settings">
+      {% if company_profile and company_profile.user_avatar %}
+        <img src="{{ company_profile.user_avatar.url }}" alt="Avatar" class="user-avatar-img">
+      {% else %}
+        <div class="user-avatar-placeholder">{{ user.username|first }}</div>
+      {% endif %}
+      <span class="user-chip-name">{{ user.username }}</span>
+    </a>
+
+    <a href="{% url 'logout' %}" style="color:rgba(255,255,255,0.55);font-size:0.82rem;">Logout</a>
   </div>
+
 </nav>
 {% endif %}
+
 <div class="{% if user.is_authenticated %}container{% endif %}">
   {% if messages %}
   <div class="messages">
@@ -90,5 +297,6 @@
   {% endif %}
   {% block content %}{% endblock %}
 </div>
+
 </body>
 </html>

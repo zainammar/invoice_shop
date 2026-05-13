@@ -1,35 +1,67 @@
 {% extends 'invoices/base.html' %}
 {% block title %}Dashboard — Invoice Shop{% endblock %}
 {% block content %}
+<!-- 
 
-<div class="page-header">
-  <div>
-    <h1 class="page-title">📊 My Dashboard</h1>
-    <p class="page-subtitle">Welcome back, <strong>{{ user.username }}</strong> — manage all your invoices here</p>
-  </div>
-  <a href="{% url 'create_invoice' %}" class="btn btn-primary">+ Create Invoice</a>
-</div>
+<div class="row-2 content-grid">
+  <div class="grid-item-1">
 
-<!-- Stats -->
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
-  <div class="card" style="text-align:center;padding:1.2rem;">
-    <div style="font-size:2rem;font-weight:800;color:#4f46e5;">{{ invoices.count }}</div>
-    <div style="color:#64748b;font-size:0.85rem;margin-top:4px;">Total Invoices</div>
   </div>
-  <div class="card" style="text-align:center;padding:1.2rem;">
-    <div style="font-size:2rem;font-weight:800;color:#22c55e;">
-      Rs. {% with total=0 %}
-        {% for inv in invoices %}{% endfor %}
-        {{ invoices.count }}
-      {% endwith %}
+  <div class="grid-item-1">
+
+  </div>
+</div> 
+
+
+-->
+<div class="row-6 content-grid">
+  <div class="grid-item-1">
+
+
+  </div>
+  <div class="grid-item-1">
+    <div>
+      <h1 class="page-title"> <img src="{{ company_profile.user_avatar.url }}" alt="Avatar" class="user-logo-img"> My Dashboard</h1>
+      <p class="page-subtitle">Welcome back, <strong>{{ user.username }}</strong> —<br> manage all your invoices here</p>
     </div>
-    <div style="color:#64748b;font-size:0.85rem;margin-top:4px;">This Month</div>
   </div>
-  <div class="card" style="text-align:center;padding:1.2rem;">
-    <div style="font-size:2rem;font-weight:800;color:#f59e0b;">{{ user.date_joined|date:"M Y" }}</div>
-    <div style="color:#64748b;font-size:0.85rem;margin-top:4px;">Member Since</div>
+
+  
+</div> 
+<div class="row-2 content-grid">
+  <div class="grid-item-1">
+    <div class="page-header">
+
+      <a href="{% url 'create_invoice' %}" class="btn btn-primary">+ Create Invoice</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
+      <div class="card" style="text-align:center;padding:1.2rem;">
+        <div style="font-size:2rem;font-weight:800;color:#4f46e5;">{{ invoices.count }}</div>
+        <div style="color:#64748b;font-size:0.85rem;margin-top:4px;">Total Invoices</div>
+      </div>
   </div>
+  </div>
+  <div class="grid-item-1">
+    <div class="card" style="text-align:center;padding:1.2rem;">
+      <div style="font-size:2rem;font-weight:800;color:#22c55e;">
+        Rs. {% with total=0 %}
+          {% for inv in invoices %}{% endfor %}
+          {{ invoices.count }}
+        {% endwith %}
+      </div>
+      <div style="color:#64748b;font-size:0.85rem;margin-top:4px;">This Month</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.2rem;">
+      <div style="font-size:2rem;font-weight:800;color:#f59e0b;">{{ user.date_joined|date:"M Y" }}</div>
+      <div style="color:#64748b;font-size:0.85rem;margin-top:4px;">Member Since</div>
+    </div>
+</div> 
+
+
 </div>
+<!-- Stats -->
+
+ 
 
 <div class="card">
   {% if invoices %}
@@ -57,10 +89,10 @@
           <td style="color:#64748b;font-size:0.85rem;">{{ invoice.created_at|date:"d M Y" }}</td>
           <td>
             <div class="actions">
-              <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-outline btn-sm">👁 View</a>
-              <a href="{% url 'edit_invoice' invoice.pk %}" class="btn btn-warning btn-sm">✏️ Edit</a>
-              <a href="{% url 'download_pdf' invoice.pk %}" class="btn btn-success btn-sm">📄 PDF</a>
-              <a href="{% url 'delete_invoice' invoice.pk %}" class="btn btn-danger btn-sm">🗑</a>
+              <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-outline btn-sm">View</a>
+              <a href="{% url 'edit_invoice' invoice.pk %}" class="btn btn-warning btn-sm">Edit</a>
+              <a href="{% url 'download_pdf' invoice.pk %}" class="btn btn-success btn-sm">PDF</a>
+              <a href="{% url 'delete_invoice' invoice.pk %}" class="btn btn-danger btn-sm">Remove</a>
             </div>
           </td>
         </tr>
