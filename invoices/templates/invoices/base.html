@@ -163,10 +163,10 @@
 
   <!-- ── RIGHT: Nav Links + User Avatar ── -->
   <div class="nav-links">
-    <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>🏠 Dashboard</a>
-    <a href="{% url 'products' %}" {% if 'product' in request.resolver_match.url_name %}class="active"{% endif %}>📦 Products</a>
-    <a href="{% url 'create_invoice' %}" class="btn-new">+ New Invoice</a>
-
+    <a href="{% url 'dashboard' %}" ...>🏠 Dashboard</a>
+<a href="{% url 'products' %}" ...>📦 Products</a>
+<a href="{% url 'monthly_report' %}" {% if 'report' in request.resolver_match.url_name %}class="active"{% endif %}>📊 Reports</a>  ← ADD THIS
+<a href="{% url 'create_invoice' %}" class="btn-new">+ New Invoice</a>
     <!-- User Avatar Chip -->
     <a href="{% url 'profile_settings' %}" class="user-chip" title="Profile & Logo Settings">
       {% if company_profile and company_profile.user_avatar %}

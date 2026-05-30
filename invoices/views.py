@@ -13,6 +13,8 @@ from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import mm
 import io
 
 
@@ -242,101 +244,590 @@ def delete_invoice(request, pk):
     return render(request, 'invoices/confirm_delete.html', {'invoice': invoice})
 
 
+# ─────────────────────────────────────────────────────────────
+# Paste this function in your invoices/views.py
+# Replace the existing download_pdf function completely
+# ─────────────────────────────────────────────────────────────
+
 @login_required
 def download_pdf(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk, user=request.user)
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
-    styles = getSampleStyleSheet()
-    story = []
 
-    title_style = ParagraphStyle('title', fontSize=26, fontName='Helvetica-Bold',
-                                  textColor=colors.HexColor('#1a1a2e'), alignment=TA_CENTER, spaceAfter=4)
-    sub_style = ParagraphStyle('sub', fontSize=10, fontName='Helvetica',
-                                textColor=colors.HexColor('#6c757d'), alignment=TA_CENTER, spaceAfter=16)
+    # ── Get company profile ───────────────────────────────────
+    try:
+        profile = request.user.company
+    except:
+        profile = None
 
-    story.append(Paragraph("INVOICE", title_style))
-    story.append(Paragraph("Invoice Shop — Professional Billing", sub_style))
+    company_name    = profile.company_name    if profile else 'Invoice Shop'
+    company_address = profile.address         if profile else ''
+    company_phone   = profile.phone           if profile else ''
+    company_email   = profile.email           if profile else ''
 
-    meta_data = [
-        [Paragraph(f"<b>Invoice #:</b> {invoice.invoice_number}", styles['Normal']),
-         Paragraph(f"<b>Date:</b> {invoice.created_at.strftime('%d %b %Y')}", styles['Normal'])],
-        [Paragraph(f"<b>Bill To:</b> {invoice.customer_name}", styles['Normal']),
-         Paragraph(f"<b>Email:</b> {invoice.customer_email or '—'}", styles['Normal'])],
+    # ── Colors ───────────────────────────────────────────────
+    C_DARK     = colors.HexColor('#0f172a')
+    C_ACCENT   = colors.HexColor('#4f46e5')
+    C_ACCENT2  = colors.HexColor('#818cf8')
+    C_LIGHT_BG = colors.HexColor('#f8fafc')
+    C_BORDER   = colors.HexColor('#e2e8f0')
+    C_TEXT     = colors.HexColor('#1e293b')
+    C_MUTED    = colors.HexColor('#64748b')
+    C_ROW_ALT  = colors.HexColor('#f1f5f9')
+
+    def rrect(cv, x, y, w, h, r, fc=None, sc=None, lw=0):
+        cv.saveState()
+        if fc: cv.setFillColor(fc)
+        if sc: cv.setStrokeColor(sc); cv.setLineWidth(lw)
+        else:  cv.setStrokeColor(colors.transparent)
+        p = cv.beginPath(); p.roundRect(x, y, w, h, r)
+        cv.drawPath(p, fill=1 if fc else 0, stroke=1 if sc else 0)
+        cv.restoreState()
+
+    buf = io.BytesIO()
+    W, H = A4
+    M  = 18 * mm
+    CW = W - 2 * M
+    cv = canvas.Canvas(buf, pagesize=A4)
+    cv.setTitle(f"Invoice {invoice.invoice_number}")
+
+    # ── 1. HEADER ────────────────────────────────────────────
+    HEADER_H = 52 * mm
+    cv.setFillColor(C_DARK)
+    cv.rect(0, H - HEADER_H, W, HEADER_H, fill=1, stroke=0)
+
+    # Decorative circles
+    cv.saveState()
+    cv.setFillColor(colors.HexColor('#1e1b4b'))
+    cv.circle(W - 10*mm, H - 5*mm, 28*mm, fill=1, stroke=0)
+    cv.setFillColor(colors.HexColor('#312e81'))
+    cv.circle(W - 2*mm, H - 22*mm, 18*mm, fill=1, stroke=0)
+    cv.restoreState()
+
+    # Accent left bar
+    cv.setFillColor(C_ACCENT)
+    cv.rect(0, H - HEADER_H, 4*mm, HEADER_H, fill=1, stroke=0)
+
+    # Company name
+    cv.setFillColor(colors.white)
+    cv.setFont('Helvetica-Bold', 22)
+    cv.drawString(M + 4*mm, H - 18*mm, company_name)
+    cv.setFillColor(C_ACCENT2)
+    cv.setFont('Helvetica', 9)
+    cv.drawString(M + 4*mm, H - 25*mm, company_address)
+
+    # Company contact
+    cv.setFillColor(colors.HexColor('#94a3b8'))
+    cv.setFont('Helvetica', 8)
+    rx = W - M - 4*mm
+    cv.drawRightString(rx, H - 17*mm, company_phone)
+    cv.drawRightString(rx, H - 24*mm, company_email)
+
+    # INVOICE label
+    cv.setFillColor(colors.white)
+    cv.setFont('Helvetica-Bold', 28)
+    cv.drawRightString(rx, H - 41*mm, 'INVOICE')
+    cv.setFillColor(C_ACCENT2)
+    cv.setFont('Helvetica', 10)
+    cv.drawRightString(rx, H - 48*mm, invoice.invoice_number)
+
+    # ── 2. INFO ROW ───────────────────────────────────────────
+    INFO_Y = H - HEADER_H - 8*mm
+    INFO_H = 34*mm
+
+    # Bill To card
+    rrect(cv, M, INFO_Y - INFO_H, CW*0.52, INFO_H, 3*mm,
+          fc=C_LIGHT_BG, sc=C_BORDER, lw=0.5)
+    cv.setFillColor(C_ACCENT)
+    cv.setFont('Helvetica-Bold', 7.5)
+    cv.drawString(M + 5*mm, INFO_Y - 7*mm, 'BILL TO')
+    cv.setFillColor(C_TEXT)
+    cv.setFont('Helvetica-Bold', 11)
+    cv.drawString(M + 5*mm, INFO_Y - 14*mm, invoice.customer_name)
+    cv.setFillColor(C_MUTED)
+    cv.setFont('Helvetica', 8.5)
+    cv.drawString(M + 5*mm, INFO_Y - 20*mm, invoice.customer_email or '')
+    cv.drawString(M + 5*mm, INFO_Y - 26*mm, (invoice.customer_address or '')[:55])
+
+    # Invoice details card
+    RX = M + CW*0.56
+    RW = CW*0.44
+    rrect(cv, RX, INFO_Y - INFO_H, RW, INFO_H, 3*mm,
+          fc=C_LIGHT_BG, sc=C_BORDER, lw=0.5)
+    detail_rows = [
+        ('Invoice No.', invoice.invoice_number),
+        ('Date',        invoice.created_at.strftime('%d %b %Y')),
+        ('Status',      'UNPAID'),
     ]
-    if invoice.customer_address:
-        meta_data.append([Paragraph(f"<b>Address:</b> {invoice.customer_address}", styles['Normal']), ''])
+    for i, (label, val) in enumerate(detail_rows):
+        yy = INFO_Y - 8*mm - i * 8.5*mm
+        cv.setFillColor(C_MUTED); cv.setFont('Helvetica', 8)
+        cv.drawString(RX + 5*mm, yy, label)
+        cv.setFillColor(C_TEXT); cv.setFont('Helvetica-Bold', 8.5)
+        if label == 'Status':
+            rrect(cv, RX + RW - 27*mm, yy - 2*mm, 22*mm, 6*mm, 3*mm,
+                  fc=colors.HexColor('#dcfce7'))
+            cv.setFillColor(colors.HexColor('#166534'))
+            cv.setFont('Helvetica-Bold', 7)
+            cv.drawCentredString(RX + RW - 16*mm, yy + 0.5*mm, 'UNPAID')
+        else:
+            cv.drawRightString(RX + RW - 5*mm, yy, val)
 
-    meta_table = Table(meta_data, colWidths=[270, 230])
-    meta_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f0f4ff')),
-        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.HexColor('#f8f9fa'), colors.white]),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('LEFTPADDING', (0, 0), (-1, -1), 10),
-    ]))
-    story.append(meta_table)
-    story.append(Spacer(1, 18))
+    # ── 3. ITEMS TABLE ────────────────────────────────────────
+    TABLE_Y = INFO_Y - INFO_H - 8*mm
+    items   = list(invoice.items.all())
+    TH      = 9*mm
 
-    header_style = ParagraphStyle('th', fontSize=10, fontName='Helvetica-Bold', textColor=colors.white, alignment=TA_CENTER)
-    cell_center = ParagraphStyle('cc', fontSize=9, alignment=TA_CENTER)
-    cell_left = ParagraphStyle('cl', fontSize=9, alignment=TA_LEFT)
-    cell_right = ParagraphStyle('cr', fontSize=9, alignment=TA_RIGHT)
+    # Table header
+    rrect(cv, M, TABLE_Y - TH, CW, TH, 2*mm, fc=C_DARK)
+    cv.setFillColor(colors.white); cv.setFont('Helvetica-Bold', 8)
+    cv.drawCentredString(M + 8*mm,       TABLE_Y - 6*mm, 'SR#')
+    cv.drawString(        M + 18*mm,     TABLE_Y - 6*mm, 'PRODUCT / SERVICE')
+    cv.drawCentredString(M + CW - 68*mm, TABLE_Y - 6*mm, 'QTY')
+    cv.drawRightString(  M + CW - 26*mm, TABLE_Y - 6*mm, 'UNIT PRICE')
+    cv.drawRightString(  M + CW - 2*mm,  TABLE_Y - 6*mm, 'AMOUNT')
 
-    table_data = [[
-        Paragraph("SR#", header_style),
-        Paragraph("Product Name", header_style),
-        Paragraph("Quantity", header_style),
-        Paragraph("Unit Price", header_style),
-        Paragraph("Amount", header_style),
-    ]]
-    for item in invoice.items.all():
-        table_data.append([
-            Paragraph(str(item.sr_no), cell_center),
-            Paragraph(item.product_name, cell_left),
-            Paragraph(str(item.quantity), cell_center),
-            Paragraph(f"Rs. {item.unit_price:,.2f}", cell_right),
-            Paragraph(f"Rs. {item.amount:,.2f}", cell_right),
-        ])
+    ROW_H = 10*mm
+    for i, item in enumerate(items):
+        ry = TABLE_Y - TH - i * ROW_H
+        row_bg = colors.white if i % 2 == 0 else C_ROW_ALT
+        cv.setFillColor(row_bg)
+        cv.rect(M, ry - ROW_H, CW, ROW_H, fill=1, stroke=0)
+        if i % 2 != 0:
+            cv.setFillColor(C_ACCENT)
+            cv.rect(M, ry - ROW_H, 1.5, ROW_H, fill=1, stroke=0)
 
-    items_table = Table(table_data, colWidths=[40, 215, 65, 90, 90], repeatRows=1)
-    items_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a1a2e')),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dee2e6')),
-        ('TOPPADDING', (0, 0), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-        ('LEFTPADDING', (0, 0), (-1, -1), 8),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
-    ]))
-    story.append(items_table)
-    story.append(Spacer(1, 12))
+        cy = ry - 6.5*mm
+        cv.setFillColor(C_MUTED);  cv.setFont('Helvetica-Bold', 8)
+        cv.drawCentredString(M + 8*mm, cy, str(item.sr_no))
+        cv.setFillColor(C_TEXT);   cv.setFont('Helvetica-Bold', 9)
+        name = item.product_name[:40] + ('...' if len(item.product_name) > 40 else '')
+        cv.drawString(M + 18*mm, cy, name)
+        cv.setFillColor(C_MUTED);  cv.setFont('Helvetica', 9)
+        cv.drawCentredString(M + CW - 68*mm, cy, str(item.quantity))
+        cv.drawRightString(M + CW - 26*mm,   cy, f'Rs. {float(item.unit_price):,.0f}')
+        cv.setFillColor(C_ACCENT); cv.setFont('Helvetica-Bold', 9)
+        cv.drawRightString(M + CW - 2*mm,    cy, f'Rs. {float(item.amount):,.0f}')
 
-    total = invoice.total_amount()
-    total_data = [['', '', '',
-        Paragraph('<b>TOTAL:</b>', ParagraphStyle('tr', alignment=TA_RIGHT, fontSize=11)),
-        Paragraph(f'<b>Rs. {total:,.2f}</b>', ParagraphStyle('tr2', alignment=TA_RIGHT, fontSize=11,
-                                                              textColor=colors.HexColor('#1a1a2e')))]]
-    total_table = Table(total_data, colWidths=[40, 215, 65, 90, 90])
-    total_table.setStyle(TableStyle([
-        ('BACKGROUND', (3, 0), (-1, 0), colors.HexColor('#e8ecff')),
-        ('GRID', (3, 0), (-1, 0), 0.5, colors.HexColor('#adb5bd')),
-        ('TOPPADDING', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-        ('RIGHTPADDING', (3, 0), (-1, -1), 8),
-    ]))
-    story.append(total_table)
-    story.append(Spacer(1, 30))
-    story.append(Paragraph("Thank you for your business! — Invoice Shop",
-                            ParagraphStyle('foot', fontSize=8, textColor=colors.HexColor('#6c757d'), alignment=TA_CENTER)))
-    doc.build(story)
-    buffer.seek(0)
-    response = HttpResponse(buffer, content_type='application/pdf')
+    last_y = TABLE_Y - TH - len(items) * ROW_H
+    cv.setStrokeColor(C_BORDER); cv.setLineWidth(0.5)
+    cv.line(M, last_y, M + CW, last_y)
+
+    # ── 4. TOTALS ─────────────────────────────────────────────
+    total = float(invoice.total_amount())
+    TOTAL_Y   = last_y - 5*mm
+    TOTAL_H   = 30*mm
+    TOTAL_W   = 70*mm
+    TX        = M + CW - TOTAL_W
+
+    rrect(cv, TX, TOTAL_Y - TOTAL_H, TOTAL_W, TOTAL_H, 3*mm, fc=C_DARK)
+    cv.setFillColor(colors.HexColor('#94a3b8'))
+    cv.setFont('Helvetica', 8.5)
+    cv.drawString(TX + 5*mm, TOTAL_Y - 9*mm, 'Subtotal')
+    cv.drawRightString(TX + TOTAL_W - 5*mm, TOTAL_Y - 9*mm, f'Rs. {total:,.0f}')
+    cv.setStrokeColor(colors.HexColor('#334155')); cv.setLineWidth(0.5)
+    cv.line(TX + 5*mm, TOTAL_Y - 13*mm, TX + TOTAL_W - 5*mm, TOTAL_Y - 13*mm)
+    cv.setFillColor(colors.white); cv.setFont('Helvetica-Bold', 11)
+    cv.drawString(TX + 5*mm, TOTAL_Y - 20*mm, 'TOTAL')
+    cv.setFillColor(C_ACCENT2); cv.setFont('Helvetica-Bold', 13)
+    cv.drawRightString(TX + TOTAL_W - 5*mm, TOTAL_Y - 20*mm, f'Rs. {total:,.0f}')
+    rrect(cv, TX + 5*mm, TOTAL_Y - 29*mm, 22*mm, 7*mm, 3*mm,
+          fc=colors.HexColor('#fee2e2'))
+    cv.setFillColor(colors.HexColor('#991b1b'))
+    cv.setFont('Helvetica-Bold', 8)
+    cv.drawCentredString(TX + 16*mm, TOTAL_Y - 25.5*mm, 'UNPAID')
+
+    # ── 5. NOTES ──────────────────────────────────────────────
+    NOTE_Y = TOTAL_Y - TOTAL_H - 7*mm
+    rrect(cv, M, NOTE_Y - 16*mm, CW * 0.6, 16*mm, 2*mm,
+          fc=colors.HexColor('#eff6ff'),
+          sc=colors.HexColor('#bfdbfe'), lw=0.5)
+    cv.setFillColor(C_ACCENT); cv.setFont('Helvetica-Bold', 7.5)
+    cv.drawString(M + 5*mm, NOTE_Y - 6*mm, 'NOTE')
+    cv.setFillColor(C_TEXT); cv.setFont('Helvetica', 8.5)
+    cv.drawString(M + 5*mm, NOTE_Y - 12*mm,
+                  'Thank you for your business! Payment due within 30 days.')
+
+    # ── 6. FOOTER ─────────────────────────────────────────────
+    cv.setFillColor(C_DARK)
+    cv.rect(0, 0, W, 12*mm, fill=1, stroke=0)
+    cv.setFillColor(C_ACCENT)
+    cv.rect(0, 0, 4*mm, 12*mm, fill=1, stroke=0)
+    cv.setFillColor(colors.HexColor('#475569'))
+    cv.setFont('Helvetica', 7.5)
+    cv.drawString(M, 4.5*mm, f'{company_name} — All rights reserved.')
+    cv.setFillColor(C_ACCENT2)
+    cv.drawRightString(W - M, 4.5*mm, 'Powered by Invoice Shop')
+
+    cv.save()
+    buf.seek(0)
+    response = HttpResponse(buf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="Invoice_{invoice.invoice_number}.pdf"'
     return response
 
 
+# ═══════════════════════════════════════════════════════════════
+# ADD TO: invoices/views.py
+# ═══════════════════════════════════════════════════════════════
+#
+# 1. Add these imports at the top of views.py:
+#
+#    from django.db.models import Sum, Count
+#    from django.db.models.functions import TruncMonth, TruncYear
+#    from datetime import date
+#    import json
+#    from reportlab.pdfgen import canvas
+#    from reportlab.lib.units import mm
+#
+# 2. Add this URL to invoices/urls.py:
+#
+#    path('reports/', views.monthly_report, name='monthly_report'),
+#    path('reports/pdf/', views.report_pdf, name='report_pdf'),
+#
+# 3. Add "📊 Reports" link in base.html navbar:
+#
+#    <a href="{% url 'monthly_report' %}" ...>📊 Reports</a>
+#
+# ═══════════════════════════════════════════════════════════════
+
+from django.db.models import Sum, Count
+from django.db.models.functions import TruncMonth
+from datetime import date, timedelta
+from calendar import month_name
+
+
+@login_required
+def monthly_report(request):
+    """Full monthly revenue report page with charts data."""
+
+    # ── Year filter ───────────────────────────────────────────
+    current_year = date.today().year
+    selected_year = int(request.GET.get('year', current_year))
+    available_years = list(range(current_year, current_year - 5, -1))
+
+    # ── Monthly revenue (current selected year) ───────────────
+    monthly_data = (
+        Invoice.objects
+        .filter(user=request.user, created_at__year=selected_year)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(
+            total_revenue=Sum('items__amount'),
+            invoice_count=Count('id', distinct=True),
+        )
+        .order_by('month')
+    )
+
+    # Build full 12-month array (fill 0 for missing months)
+    monthly_map = {m['month'].month: m for m in monthly_data}
+    months_labels = []
+    months_revenue = []
+    months_count = []
+    for m in range(1, 13):
+        months_labels.append(month_name[m][:3])
+        if m in monthly_map:
+            months_revenue.append(float(monthly_map[m]['total_revenue'] or 0))
+            months_count.append(monthly_map[m]['invoice_count'])
+        else:
+            months_revenue.append(0)
+            months_count.append(0)
+
+    # ── Summary stats ─────────────────────────────────────────
+    year_invoices = Invoice.objects.filter(
+        user=request.user, created_at__year=selected_year
+    )
+    total_revenue = year_invoices.aggregate(
+        total=Sum('items__amount')
+    )['total'] or 0
+
+    total_invoices = year_invoices.count()
+    avg_invoice    = (float(total_revenue) / total_invoices) if total_invoices else 0
+    best_month_idx = months_revenue.index(max(months_revenue)) if any(months_revenue) else 0
+    best_month     = months_labels[best_month_idx]
+    best_month_rev = months_revenue[best_month_idx]
+
+    # ── Top 5 products (by revenue) ───────────────────────────
+    top_products = (
+        InvoiceItem.objects
+        .filter(invoice__user=request.user, invoice__created_at__year=selected_year)
+        .values('product_name')
+        .annotate(
+            total_amount=Sum('amount'),
+            total_qty=Sum('quantity'),
+            times_sold=Count('id'),
+        )
+        .order_by('-total_amount')[:5]
+    )
+
+    # ── Top 5 customers ───────────────────────────────────────
+    top_customers = (
+        Invoice.objects
+        .filter(user=request.user, created_at__year=selected_year)
+        .values('customer_name')
+        .annotate(
+            total_spent=Sum('items__amount'),
+            invoice_count=Count('id'),
+        )
+        .order_by('-total_spent')[:5]
+    )
+
+    # ── Recent invoices (last 5) ──────────────────────────────
+    recent_invoices = Invoice.objects.filter(
+        user=request.user, created_at__year=selected_year
+    ).order_by('-created_at')[:5]
+
+    # ── This month vs last month ──────────────────────────────
+    today = date.today()
+    this_month_rev = float(
+        Invoice.objects.filter(
+            user=request.user,
+            created_at__year=today.year,
+            created_at__month=today.month
+        ).aggregate(t=Sum('items__amount'))['t'] or 0
+    )
+    last_month_date = (today.replace(day=1) - timedelta(days=1))
+    last_month_rev = float(
+        Invoice.objects.filter(
+            user=request.user,
+            created_at__year=last_month_date.year,
+            created_at__month=last_month_date.month
+        ).aggregate(t=Sum('items__amount'))['t'] or 0
+    )
+    if last_month_rev > 0:
+        growth_pct = ((this_month_rev - last_month_rev) / last_month_rev) * 100
+    else:
+        growth_pct = 100 if this_month_rev > 0 else 0
+
+    context = {
+        'selected_year':    selected_year,
+        'available_years':  available_years,
+        'total_revenue':    total_revenue,
+        'total_invoices':   total_invoices,
+        'avg_invoice':      avg_invoice,
+        'best_month':       best_month,
+        'best_month_rev':   best_month_rev,
+        'top_products':     top_products,
+        'top_customers':    top_customers,
+        'recent_invoices':  recent_invoices,
+        'this_month_rev':   this_month_rev,
+        'last_month_rev':   last_month_rev,
+        'growth_pct':       growth_pct,
+        # JSON for JS chart
+        'months_labels_json':  json.dumps(months_labels),
+        'months_revenue_json': json.dumps(months_revenue),
+        'months_count_json':   json.dumps(months_count),
+    }
+    return render(request, 'invoices/monthly_report.html', context)
+
+
+@login_required
+def report_pdf(request):
+    """Download monthly report as PDF."""
+    from reportlab.lib import colors as rl_colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.pdfgen import canvas as rl_canvas
+
+    selected_year = int(request.GET.get('year', date.today().year))
+
+    # Same data queries as above
+    year_invoices  = Invoice.objects.filter(user=request.user, created_at__year=selected_year)
+    total_revenue  = float(year_invoices.aggregate(t=Sum('items__amount'))['t'] or 0)
+    total_invoices = year_invoices.count()
+    avg_invoice    = (total_revenue / total_invoices) if total_invoices else 0
+
+    monthly_data = (
+        Invoice.objects
+        .filter(user=request.user, created_at__year=selected_year)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(total_revenue=Sum('items__amount'), invoice_count=Count('id', distinct=True))
+        .order_by('month')
+    )
+    monthly_map = {m['month'].month: m for m in monthly_data}
+
+    top_products = (
+        InvoiceItem.objects
+        .filter(invoice__user=request.user, invoice__created_at__year=selected_year)
+        .values('product_name')
+        .annotate(total_amount=Sum('amount'), times_sold=Count('id'))
+        .order_by('-total_amount')[:5]
+    )
+    top_customers = (
+        Invoice.objects
+        .filter(user=request.user, created_at__year=selected_year)
+        .values('customer_name')
+        .annotate(total_spent=Sum('items__amount'), invoice_count=Count('id'))
+        .order_by('-total_spent')[:5]
+    )
+
+    try:
+        profile = request.user.company
+        company_name = profile.company_name
+    except:
+        company_name = 'Invoice Shop'
+
+    # ── Build PDF ─────────────────────────────────────────────
+    buf = io.BytesIO()
+    W, H = A4
+    M  = 15 * mm
+    CW = W - 2 * M
+    cv = rl_canvas.Canvas(buf, pagesize=A4)
+
+    C_DARK   = rl_colors.HexColor('#0f172a')
+    C_ACCENT = rl_colors.HexColor('#4f46e5')
+    C_ACCENT2= rl_colors.HexColor('#818cf8')
+    C_MUTED  = rl_colors.HexColor('#64748b')
+    C_TEXT   = rl_colors.HexColor('#1e293b')
+    C_LIGHT  = rl_colors.HexColor('#f8fafc')
+    C_BORDER = rl_colors.HexColor('#e2e8f0')
+    C_GREEN  = rl_colors.HexColor('#22c55e')
+
+    def rrect(x, y, w, h, r, fc=None, sc=None, lw=0.5):
+        cv.saveState()
+        if fc: cv.setFillColor(fc)
+        if sc: cv.setStrokeColor(sc); cv.setLineWidth(lw)
+        else:  cv.setStrokeColor(rl_colors.transparent)
+        p = cv.beginPath(); p.roundRect(x, y, w, h, r)
+        cv.drawPath(p, fill=1 if fc else 0, stroke=1 if sc else 0)
+        cv.restoreState()
+
+    # ── Header ────────────────────────────────────────────────
+    cv.setFillColor(C_DARK)
+    cv.rect(0, H - 40*mm, W, 40*mm, fill=1, stroke=0)
+    cv.setFillColor(C_ACCENT)
+    cv.rect(0, H - 40*mm, 4*mm, 40*mm, fill=1, stroke=0)
+    # Decorative circle
+    cv.setFillColor(rl_colors.HexColor('#1e1b4b'))
+    cv.circle(W - 15*mm, H - 8*mm, 22*mm, fill=1, stroke=0)
+
+    cv.setFillColor(rl_colors.white)
+    cv.setFont('Helvetica-Bold', 20)
+    cv.drawString(M + 4*mm, H - 15*mm, f'Monthly Revenue Report')
+    cv.setFillColor(C_ACCENT2)
+    cv.setFont('Helvetica', 9)
+    cv.drawString(M + 4*mm, H - 22*mm, f'{company_name}  —  Year {selected_year}')
+    cv.setFillColor(rl_colors.HexColor('#475569'))
+    cv.setFont('Helvetica', 8)
+    cv.drawString(M + 4*mm, H - 29*mm, f'Generated: {date.today().strftime("%d %b %Y")}')
+
+    # ── Summary Stats Row ─────────────────────────────────────
+    STAT_Y = H - 40*mm - 6*mm
+    STAT_H = 22*mm
+    stat_items = [
+        ('TOTAL REVENUE',  f'Rs. {total_revenue:,.0f}', C_ACCENT),
+        ('TOTAL INVOICES', str(total_invoices),          C_GREEN),
+        ('AVG INVOICE',    f'Rs. {avg_invoice:,.0f}',    rl_colors.HexColor('#f59e0b')),
+        ('YEAR',           str(selected_year),           C_MUTED),
+    ]
+    sw = (CW - 3*3*mm) / 4
+    for i, (label, val, color) in enumerate(stat_items):
+        sx = M + i * (sw + 3*mm)
+        rrect(sx, STAT_Y - STAT_H, sw, STAT_H, 2*mm, fc=C_LIGHT, sc=C_BORDER)
+        cv.setFillColor(color); cv.setFont('Helvetica-Bold', 7)
+        cv.drawString(sx + 4*mm, STAT_Y - 7*mm, label)
+        cv.setFillColor(C_TEXT); cv.setFont('Helvetica-Bold', 11)
+        cv.drawString(sx + 4*mm, STAT_Y - 16*mm, val)
+
+    # ── Monthly Breakdown Table ───────────────────────────────
+    TABLE_Y = STAT_Y - STAT_H - 8*mm
+    cv.setFillColor(C_DARK)
+    cv.rect(M, TABLE_Y - 8*mm, CW, 8*mm, fill=1, stroke=0)
+    cv.setFillColor(rl_colors.white); cv.setFont('Helvetica-Bold', 8)
+    cv.drawString(M + 4*mm, TABLE_Y - 5.5*mm, 'MONTH')
+    cv.drawRightString(M + CW*0.45, TABLE_Y - 5.5*mm, 'INVOICES')
+    cv.drawRightString(M + CW*0.75, TABLE_Y - 5.5*mm, 'REVENUE')
+    cv.drawRightString(M + CW - 2*mm, TABLE_Y - 5.5*mm, 'BAR')
+
+    max_rev = max((float(monthly_map[m]['total_revenue'] or 0) for m in monthly_map), default=1) or 1
+    ROW_H = 7.5*mm
+    for i, mo in enumerate(range(1, 13)):
+        ry = TABLE_Y - 8*mm - i * ROW_H
+        bg = C_LIGHT if i % 2 == 0 else rl_colors.white
+        cv.setFillColor(bg)
+        cv.rect(M, ry - ROW_H, CW, ROW_H, fill=1, stroke=0)
+
+        rev = float(monthly_map[mo]['total_revenue'] or 0) if mo in monthly_map else 0
+        cnt = monthly_map[mo]['invoice_count'] if mo in monthly_map else 0
+        cy  = ry - ROW_H + 2.5*mm
+
+        cv.setFillColor(C_TEXT); cv.setFont('Helvetica-Bold', 8)
+        cv.drawString(M + 4*mm, cy, month_name[mo])
+        cv.setFillColor(C_MUTED); cv.setFont('Helvetica', 8)
+        cv.drawRightString(M + CW*0.45, cy, str(cnt))
+        cv.setFillColor(C_TEXT if rev > 0 else C_MUTED)
+        cv.setFont('Helvetica-Bold' if rev > 0 else 'Helvetica', 8)
+        cv.drawRightString(M + CW*0.75, cy, f'Rs. {rev:,.0f}' if rev > 0 else '—')
+
+        # Mini bar
+        BAR_X     = M + CW*0.78
+        BAR_MAX_W = CW*0.18
+        bar_w = (rev / max_rev) * BAR_MAX_W if rev > 0 else 0
+        cv.setFillColor(C_BORDER)
+        cv.rect(BAR_X, cy + 0.5*mm, BAR_MAX_W, 3*mm, fill=1, stroke=0)
+        if bar_w > 0:
+            cv.setFillColor(C_ACCENT)
+            cv.rect(BAR_X, cy + 0.5*mm, bar_w, 3*mm, fill=1, stroke=0)
+
+    # ── Top Products ─────────────────────────────────────────
+    PROD_Y = TABLE_Y - 8*mm - 12 * ROW_H - 8*mm
+    cv.setFillColor(C_DARK)
+    cv.rect(M, PROD_Y - 8*mm, CW * 0.48, 8*mm, fill=1, stroke=0)
+    cv.setFillColor(rl_colors.white); cv.setFont('Helvetica-Bold', 8)
+    cv.drawString(M + 4*mm, PROD_Y - 5.5*mm, 'TOP PRODUCTS')
+
+    for i, p in enumerate(top_products):
+        ry  = PROD_Y - 8*mm - i * ROW_H
+        rev = float(p['total_amount'] or 0)
+        bg  = C_LIGHT if i % 2 == 0 else rl_colors.white
+        cv.setFillColor(bg)
+        cv.rect(M, ry - ROW_H, CW * 0.48, ROW_H, fill=1, stroke=0)
+        cy = ry - ROW_H + 2.5*mm
+        cv.setFillColor(C_ACCENT); cv.setFont('Helvetica-Bold', 7.5)
+        cv.drawString(M + 3*mm, cy, f'{i+1}.')
+        cv.setFillColor(C_TEXT); cv.setFont('Helvetica', 7.5)
+        name = p['product_name'][:28] + ('…' if len(p['product_name']) > 28 else '')
+        cv.drawString(M + 8*mm, cy, name)
+        cv.setFillColor(C_ACCENT); cv.setFont('Helvetica-Bold', 7.5)
+        cv.drawRightString(M + CW*0.46, cy, f'Rs. {rev:,.0f}')
+
+    # ── Top Customers ─────────────────────────────────────────
+    CX = M + CW * 0.52
+    CW2 = CW * 0.48
+    cv.setFillColor(C_DARK)
+    cv.rect(CX, PROD_Y - 8*mm, CW2, 8*mm, fill=1, stroke=0)
+    cv.setFillColor(rl_colors.white); cv.setFont('Helvetica-Bold', 8)
+    cv.drawString(CX + 4*mm, PROD_Y - 5.5*mm, 'TOP CUSTOMERS')
+
+    for i, cust in enumerate(top_customers):
+        ry  = PROD_Y - 8*mm - i * ROW_H
+        rev = float(cust['total_spent'] or 0)
+        bg  = C_LIGHT if i % 2 == 0 else rl_colors.white
+        cv.setFillColor(bg)
+        cv.rect(CX, ry - ROW_H, CW2, ROW_H, fill=1, stroke=0)
+        cy = ry - ROW_H + 2.5*mm
+        cv.setFillColor(C_GREEN); cv.setFont('Helvetica-Bold', 7.5)
+        cv.drawString(CX + 3*mm, cy, f'{i+1}.')
+        cv.setFillColor(C_TEXT); cv.setFont('Helvetica', 7.5)
+        cname = cust['customer_name'][:26] + ('…' if len(cust['customer_name']) > 26 else '')
+        cv.drawString(CX + 8*mm, cy, cname)
+        cv.setFillColor(C_GREEN); cv.setFont('Helvetica-Bold', 7.5)
+        cv.drawRightString(CX + CW2 - 2*mm, cy, f'Rs. {rev:,.0f}')
+
+    # ── Footer ────────────────────────────────────────────────
+    cv.setFillColor(C_DARK)
+    cv.rect(0, 0, W, 10*mm, fill=1, stroke=0)
+    cv.setFillColor(C_ACCENT)
+    cv.rect(0, 0, 4*mm, 10*mm, fill=1, stroke=0)
+    cv.setFillColor(rl_colors.HexColor('#475569')); cv.setFont('Helvetica', 7)
+    cv.drawString(M, 3.5*mm, f'{company_name} — Revenue Report {selected_year}')
+    cv.setFillColor(C_ACCENT2)
+    cv.drawRightString(W - M, 3.5*mm, 'Powered by Invoice Shop')
+
+    cv.save()
+    buf.seek(0)
+    resp = HttpResponse(buf, content_type='application/pdf')
+    resp['Content-Disposition'] = f'attachment; filename="Revenue_Report_{selected_year}.pdf"'
+    return resp
 # ─── Company Profile / Logo Settings ────────────────────
 @login_required
 def profile_settings(request):

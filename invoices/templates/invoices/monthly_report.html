@@ -1,0 +1,371 @@
+{% extends 'invoices/base.html' %}
+{% block title %}Revenue Report {{ selected_year }} — Invoice Shop{% endblock %}
+{% block extra_style %}
+<style>
+  /* ── Layout ── */
+  .report-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; }
+  .year-tabs { display:flex; gap:6px; flex-wrap:wrap; }
+  .year-tab { padding:6px 16px; border-radius:20px; font-size:0.85rem; font-weight:600; text-decoration:none; color:var(--muted); background:#f1f5f9; transition:all 0.2s; }
+  .year-tab.active, .year-tab:hover { background:var(--accent); color:white; }
+
+  /* ── Stat Cards ── */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
+  .stat-card { background:white; border-radius:14px; padding:1.3rem 1.4rem; box-shadow:0 1px 8px rgba(0,0,0,0.07); position:relative; overflow:hidden; border-top:3px solid transparent; transition:transform 0.2s; }
+  .stat-card:hover { transform:translateY(-3px); }
+  .stat-card.blue  { border-top-color:#4f46e5; }
+  .stat-card.green { border-top-color:#22c55e; }
+  .stat-card.amber { border-top-color:#f59e0b; }
+  .stat-card.rose  { border-top-color:#ef4444; }
+  .stat-card .icon { font-size:1.8rem; margin-bottom:0.6rem; }
+  .stat-card .label { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); margin-bottom:4px; }
+  .stat-card .value { font-size:1.5rem; font-weight:800; color:var(--primary); line-height:1; }
+  .stat-card .sub { font-size:0.78rem; color:var(--muted); margin-top:4px; }
+  .stat-card .bg-icon { position:absolute; right:-8px; bottom:-8px; font-size:4rem; opacity:0.06; }
+
+  /* ── Growth Badge ── */
+  .growth-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:0.78rem; font-weight:700; margin-top:6px; }
+  .growth-up   { background:#dcfce7; color:#166534; }
+  .growth-down { background:#fee2e2; color:#991b1b; }
+  .growth-flat { background:#f1f5f9; color:#64748b; }
+
+  /* ── Main Grid ── */
+  .main-grid { display:grid; grid-template-columns:1fr 360px; gap:1.2rem; margin-bottom:1.2rem; }
+
+  /* ── Chart Card ── */
+  .chart-card { background:white; border-radius:14px; padding:1.4rem; box-shadow:0 1px 8px rgba(0,0,0,0.07); }
+  .chart-title { font-size:0.95rem; font-weight:700; color:var(--primary); margin-bottom:1rem; display:flex; align-items:center; gap:8px; }
+  .chart-wrap { position:relative; height:240px; }
+
+  /* ── Table ── */
+  .report-table { width:100%; border-collapse:collapse; }
+  .report-table th { background:var(--primary); color:white; padding:10px 12px; font-size:0.76rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+  .report-table td { padding:10px 12px; border-bottom:1px solid #f1f5f9; font-size:0.88rem; vertical-align:middle; }
+  .report-table tr:last-child td { border-bottom:none; }
+  .report-table tr:hover td { background:#fafbff; }
+
+  /* Mini bar in table */
+  .mini-bar-wrap { display:flex; align-items:center; gap:8px; }
+  .mini-bar-bg { flex:1; height:6px; background:#f1f5f9; border-radius:3px; overflow:hidden; }
+  .mini-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#4f46e5,#818cf8); transition:width 1s ease; }
+
+  /* ── Side cards ── */
+  .side-stack { display:flex; flex-direction:column; gap:1.2rem; }
+  .rank-card { background:white; border-radius:14px; padding:1.3rem; box-shadow:0 1px 8px rgba(0,0,0,0.07); }
+  .rank-title { font-size:0.9rem; font-weight:700; color:var(--primary); margin-bottom:1rem; display:flex; align-items:center; gap:8px; }
+  .rank-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f8fafc; }
+  .rank-item:last-child { border-bottom:none; }
+  .rank-num { width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,#4f46e5,#7c3aed); color:white; font-size:0.72rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .rank-num.gold   { background:linear-gradient(135deg,#f59e0b,#d97706); }
+  .rank-num.silver { background:linear-gradient(135deg,#94a3b8,#64748b); }
+  .rank-num.bronze { background:linear-gradient(135deg,#b45309,#92400e); }
+  .rank-name { flex:1; font-size:0.85rem; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rank-amount { font-size:0.82rem; font-weight:700; color:#4f46e5; white-space:nowrap; }
+
+  /* ── Bottom Grid ── */
+  .bottom-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+
+  /* ── Recent Invoices ── */
+  .inv-row { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid #f1f5f9; }
+  .inv-row:last-child { border-bottom:none; }
+  .inv-dot { width:8px; height:8px; border-radius:50%; background:#4f46e5; flex-shrink:0; }
+  .inv-num { font-size:0.78rem; font-weight:700; color:#4f46e5; }
+  .inv-cust { font-size:0.85rem; font-weight:600; color:var(--text); flex:1; }
+  .inv-date { font-size:0.75rem; color:var(--muted); }
+  .inv-amt { font-size:0.88rem; font-weight:700; color:var(--text); }
+
+  /* ── Download btn ── */
+  .btn-pdf { background:linear-gradient(135deg,#ef4444,#dc2626); color:white; border:none; }
+  .btn-pdf:hover { background:linear-gradient(135deg,#dc2626,#b91c1c); }
+
+  @media(max-width:900px) {
+    .stats-grid { grid-template-columns:repeat(2,1fr); }
+    .main-grid  { grid-template-columns:1fr; }
+    .bottom-grid{ grid-template-columns:1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── Page Header ── -->
+<div class="report-header">
+  <div>
+    <h1 class="page-title">📊 Revenue Report</h1>
+    <img src="{{ company_profile.company_logo.url }}" alt="Logo" class="brand-logo-img">
+    <p class="page-subtitle">Year <strong>{{ selected_year }}</strong> — full breakdown of your business performance</p>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <!-- Year selector -->
+    <div class="year-tabs">
+      {% for yr in available_years %}
+      <a href="?year={{ yr }}" class="year-tab {% if yr == selected_year %}active{% endif %}">{{ yr }}</a>
+      {% endfor %}
+    </div>
+    <!-- PDF Download -->
+    <a href="{% url 'report_pdf' %}?year={{ selected_year }}" class="btn btn-pdf">
+      📥 Download PDF
+    </a>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline">← Dashboard</a>
+  </div>
+</div>
+
+<!-- ── Stat Cards ── -->
+<div class="stats-grid">
+  <div class="stat-card blue">
+    <div class="icon">💰</div>
+    <div class="label">Total Revenue</div>
+    <div class="value">Rs. {{ total_revenue|floatformat:0 }}</div>
+    <div class="sub">{{ selected_year }} full year</div>
+    <div class="bg-icon">💰</div>
+  </div>
+  <div class="stat-card green">
+    <div class="icon">📄</div>
+    <div class="label">Total Invoices</div>
+    <div class="value">{{ total_invoices }}</div>
+    <div class="sub">invoices issued</div>
+    <div class="bg-icon">📄</div>
+  </div>
+  <div class="stat-card amber">
+    <div class="icon">📈</div>
+    <div class="label">Avg per Invoice</div>
+    <div class="value">Rs. {{ avg_invoice|floatformat:0 }}</div>
+    <div class="sub">average value</div>
+    <div class="bg-icon">📈</div>
+  </div>
+  <div class="stat-card rose">
+    <div class="icon">🏆</div>
+    <div class="label">Best Month</div>
+    <div class="value">{{ best_month }}</div>
+    <div class="sub">Rs. {{ best_month_rev|floatformat:0 }}</div>
+    <div class="bg-icon">🏆</div>
+  </div>
+</div>
+
+<!-- ── This month vs last month ── -->
+<div class="chart-card" style="margin-bottom:1.2rem;padding:1rem 1.4rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:4px;">This Month</div>
+      <div style="font-size:1.6rem;font-weight:800;color:var(--primary);">Rs. {{ this_month_rev|floatformat:0 }}</div>
+      {% if growth_pct >= 0 %}
+        <span class="growth-badge growth-up">▲ {{ growth_pct|floatformat:1 }}% vs last month</span>
+      {% else %}
+        <span class="growth-badge growth-down">▼ {{ growth_pct|floatformat:1 }}% vs last month</span>
+      {% endif %}
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:4px;">Last Month</div>
+      <div style="font-size:1.3rem;font-weight:700;color:var(--muted);">Rs. {{ last_month_rev|floatformat:0 }}</div>
+    </div>
+    <div style="flex:1;max-width:300px;">
+      <div style="display:flex;gap:8px;align-items:flex-end;height:50px;">
+        {% if last_month_rev > 0 or this_month_rev > 0 %}
+          {% with mx=this_month_rev|floatformat:0 %}
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div style="
+                width:100%;
+                background:linear-gradient(180deg,#818cf8,#4f46e5);
+                border-radius:4px 4px 0 0;
+                opacity:0.7;
+                height:40px;
+                max-height:40px;"></div>
+        </div>  
+        </div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+            <div style="width:100%;border-radius:4px 4px 0 0;min-height:4px;max-height:40px;
+              background:linear-gradient(180deg,#818cf8,#4f46e5);
+              height:40px;"></div>
+            <div style="font-size:0.65rem;color:var(--muted);">This</div>
+          </div>
+          {% endwith %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main Grid: Chart + Side ── -->
+<div class="main-grid">
+
+  <!-- Revenue Chart -->
+  <div class="chart-card">
+    <div class="chart-title">📅 Monthly Revenue — {{ selected_year }}</div>
+    <div class="chart-wrap">
+      <canvas id="revenueChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Side Stack -->
+  <div class="side-stack">
+
+    <!-- Top Products -->
+    <div class="rank-card">
+      <div class="rank-title">📦 Top Products</div>
+      {% for p in top_products %}
+      <div class="rank-item">
+        <div class="rank-num {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">
+          {{ forloop.counter }}
+        </div>
+        <div class="rank-name" title="{{ p.product_name }}">{{ p.product_name }}</div>
+        <div class="rank-amount">Rs. {{ p.total_amount|floatformat:0 }}</div>
+      </div>
+      {% empty %}
+      <p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1rem;">No data yet</p>
+      {% endfor %}
+    </div>
+
+    <!-- Top Customers -->
+    <div class="rank-card">
+      <div class="rank-title">👥 Top Customers</div>
+      {% for cust in top_customers %}
+      <div class="rank-item">
+        <div class="rank-num {% if forloop.counter == 1 %}gold{% elif forloop.counter == 2 %}silver{% elif forloop.counter == 3 %}bronze{% endif %}">
+          {{ forloop.counter }}
+        </div>
+        <div class="rank-name">{{ cust.customer_name }}</div>
+        <div class="rank-amount">Rs. {{ cust.total_spent|floatformat:0 }}</div>
+      </div>
+      {% empty %}
+      <p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:1rem;">No data yet</p>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Bottom Grid: Monthly Table + Recent Invoices ── -->
+<div class="bottom-grid">
+
+  <!-- Monthly Breakdown Table -->
+  <div class="chart-card">
+    <div class="chart-title">📋 Monthly Breakdown</div>
+    <div style="overflow-x:auto;">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th style="text-align:center;">Invoices</th>
+            <th style="text-align:right;">Revenue</th>
+            <th style="min-width:100px;">Bar</th>
+          </tr>
+        </thead>
+        <tbody id="monthlyTableBody">
+          <!-- Filled by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Invoices -->
+  <div class="chart-card">
+    <div class="chart-title">🕐 Recent Invoices</div>
+    {% for inv in recent_invoices %}
+    <div class="inv-row">
+      <div class="inv-dot"></div>
+      <div>
+        <div class="inv-num">{{ inv.invoice_number }}</div>
+        <div class="inv-cust">{{ inv.customer_name }}</div>
+      </div>
+      <div class="inv-date">{{ inv.created_at|date:"d M" }}</div>
+      <div class="inv-amt">Rs. {{ inv.total_amount|floatformat:0 }}</div>
+    </div>
+    {% empty %}
+    <p style="color:var(--muted);font-size:0.85rem;text-align:center;padding:2rem;">No invoices this year</p>
+    {% endfor %}
+    {% if recent_invoices %}
+    <div style="margin-top:1rem;text-align:center;">
+      <a href="{% url 'dashboard' %}" style="font-size:0.82rem;color:#4f46e5;text-decoration:none;font-weight:600;">View all invoices →</a>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── Chart.js ── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// const LABELS  = {{ months_labels_json|safe }};
+// const REVENUE = {{ months_revenue_json|safe }};
+// const COUNTS  = {{ months_count_json|safe }};
+// const MAX_REV = Math.max(...REVENUE, 1);
+const LABELS = ["Jan","Feb","Mar"];
+const REVENUE = [1000,2000,3000];
+const COUNTS = [5,10,15];
+// ── Revenue Bar Chart ──────────────────────────────
+const ctx = document.getElementById('revenueChart').getContext('2d');
+
+// Gradient fill
+const grad = ctx.createLinearGradient(0, 0, 0, 240);
+grad.addColorStop(0, 'rgba(79,70,229,0.9)');
+grad.addColorStop(1, 'rgba(129,140,248,0.5)');
+
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: LABELS,
+    datasets: [{
+      label: 'Revenue (Rs.)',
+      data: REVENUE,
+      backgroundColor: REVENUE.map(v =>
+        v === MAX_REV ? 'rgba(79,70,229,1)' : 'rgba(79,70,229,0.65)'
+      ),
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => `Rs. ${ctx.raw.toLocaleString()}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { font: { size: 11 }, color: '#64748b' }
+      },
+      y: {
+        grid: { color: '#f1f5f9' },
+        ticks: {
+          font: { size: 10 }, color: '#64748b',
+          callback: v => v >= 1000 ? `Rs.${(v/1000).toFixed(0)}k` : `Rs.${v}`
+        }
+      }
+    }
+  }
+});
+
+// ── Monthly Table ─────────────────────────────────
+const tbody = document.getElementById('monthlyTableBody');
+const months = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+LABELS.forEach((lbl, i) => {
+  const rev = REVENUE[i];
+  const cnt = COUNTS[i];
+  const barPct = MAX_REV > 0 ? (rev / MAX_REV * 100).toFixed(1) : 0;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="font-weight:600;color:${rev>0?'#1e293b':'#94a3b8'}">${months[i]}</td>
+    <td style="text-align:center;color:${cnt>0?'#4f46e5':'#94a3b8'};font-weight:600">${cnt || '—'}</td>
+    <td style="text-align:right;font-weight:700;color:${rev>0?'#1e293b':'#94a3b8'}">
+      ${rev > 0 ? 'Rs. ' + rev.toLocaleString() : '—'}
+    </td>
+    <td>
+      <div class="mini-bar-wrap">
+        <div class="mini-bar-bg">
+          <div class="mini-bar-fill" style="width:${barPct}%"></div>
+        </div>
+        <span style="font-size:0.7rem;color:#94a3b8;min-width:32px">${barPct}%</span>
+      </div>
+    </td>
+  `;
+  tbody.appendChild(tr);
+});
+</script>
+{% endblock %}
