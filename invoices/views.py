@@ -15,6 +15,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
+from django.db.models import Sum
 import io
 
 
@@ -139,7 +140,8 @@ def dashboard(request):
     product_count = UserProduct.objects.filter(
         user=request.user
     ).count()
-
+    
+    
     return render(request, 'invoices/dashboard.html', {
         'invoices': invoices,
         'product_count': product_count,

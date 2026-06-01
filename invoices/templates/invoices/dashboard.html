@@ -1,101 +1,167 @@
 {% extends 'invoices/base.html' %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 {% block title %}Dashboard — Invoice Shop{% endblock %}
+
 {% block content %}
 
-<div class="page-header">
-  <div>
-    <h1 class="page-title">📊 My Dashboard</h1>
-    <p class="page-subtitle">Welcome back, <strong>{{ user.username }}</strong> — manage all your invoices here</p>
-  </div>
-  <a href="{% url 'create_invoice' %}" class="btn btn-primary">+ Create Invoice</a>
-</div>
 
-<!-- Stats -->
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;">
-  <div class="card" style="text-align:center;padding:1.2rem;">
-    <div style="font-size:2rem;font-weight:800;color:#4f46e5;">{{ invoices.count }}</div>
-    <div style="color:#64748b;font-size:0.85rem;margin-top:4px;">Total Invoices</div>
-  </div>
-  <div class="card" style="text-align:center;padding:1.2rem;">
-    <div style="font-size:2rem;font-weight:800;color:#22c55e;">
-      Rs. {% with total=0 %}
-        {% for inv in invoices %}{% endfor %}
-        {{ invoices.count }}
-      {% endwith %}
+
+<div class="container">
+
+    <!-- HEADER -->
+    <div class="page-header">
+        <div>
+            <h1>📊 Dashboard</h1>
+            <p>Welcome {{ user.username }}</p>
+        </div>
+
+        <a href="{% url 'create_invoice' %}" class="btn btn-primary">
+            + Create Invoice
+        </a>
     </div>
-    <div style="color:#64748b;font-size:0.85rem;margin-top:4px;">This Month</div>
   </div>
-  <div class="card" style="text-align:center;padding:1.2rem;">
-    <div style="font-size:2rem;font-weight:800;color:#f59e0b;">{{ user.date_joined|date:"M Y" }}</div>
-    <div style="color:#64748b;font-size:0.85rem;margin-top:4px;">Member Since</div>
-  </div>
-</div>
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-    
-  <h3>Invoices</h3>
+    <!-- STATS -->
+    <div class="row-3 content-grid bg-2">
+      <div class="grid-item-1">
+    <div class="dashboard-stats">
 
-  <form method="GET">
-      <input type="month"
-             name="month"
-             value="{{ request.GET.month }}"
-             style="padding:8px;border:1px solid #ddd;border-radius:6px;">
-
-      <button type="submit"
-              class="btn btn-primary btn-sm">
-          Filter
-      </button>
-
-      <a href="{% url 'dashboard' %}"
-         class="btn btn-outline btn-sm">
-          Clear
-      </a>
-  </form>
-
-</div>
-<div class="card">
-  {% if invoices %}
-  <div style="overflow-x:auto;">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Invoice No.</th>
-          <th>Customer</th>
-          <th>Items</th>
-          <th>Total Amount</th>
-          <th>Date</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for invoice in invoices %}
-        <tr>
-          <td style="color:#94a3b8;font-size:0.82rem;">{{ forloop.counter }}</td>
-          <td><span class="badge badge-blue">{{ invoice.invoice_number }}</span></td>
-          <td><strong>{{ invoice.customer_name }}</strong>{% if invoice.customer_email %}<br><small style="color:#94a3b8;">{{ invoice.customer_email }}</small>{% endif %}</td>
-          <td style="text-align:center;">{{ invoice.items.count }}</td>
-          <td style="font-weight:700;color:#1a1a2e;">Rs. {{ invoice.total_amount|floatformat:2 }}</td>
-          <td style="color:#64748b;font-size:0.85rem;">{{ invoice.created_at|date:"d M Y" }}</td>
-          <td>
-            <div class="actions">
-              <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-outline btn-sm">👁 View</a>
-              <a href="{% url 'edit_invoice' invoice.pk %}" class="btn btn-warning btn-sm">✏️ Edit</a>
-              <a href="{% url 'download_pdf' invoice.pk %}" class="btn btn-success btn-sm">📄 PDF</a>
-              <a href="{% url 'delete_invoice' invoice.pk %}" class="btn btn-danger btn-sm">🗑</a>
+        <div class="card stat-card">
+            <div class="stat-number">{{ invoices.count }}</div>
+            <div class="stat-label">Total Invoices</div>
+        </div>
+      </div>
+    </div>
+      <div class="grid-item-1">
+        <div class="card stat-card">
+            <div id="monthly-total" class="stat-number stat-success">
+                Rs. 0.00
             </div>
-          </td>
-        </tr>
+            <div class="stat-label">Total Sales</div>
+        </div>
+      </div>
+      <div class="grid-item-1">
+        <div class="card stat-card">
+            <div class="stat-number stat-warning">
+                {{ user.date_joined|date:"M Y" }}
+            </div>
+            <div class="stat-label">Member Since</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTER -->
+    <div class="dashboard-filter">
+
+        <h3>Invoices</h3>
+
+        <form method="GET" class="filter-form">
+
+            <input type="month" name="month" value="{{ request.GET.month }}">
+
+            <button type="submit" class="btn btn-primary btn-sm">
+                Filter
+            </button>
+
+            <a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">
+                Clear
+            </a>
+
+        </form>
+
+    </div>
+
+    <!-- INVOICES GRID -->
+    {% if invoices %}
+
+    <div class="invoice-grid row-3">
+
+        {% for invoice in invoices %}
+
+        <div class="card invoice-card">
+
+            <div class="invoice-header">
+                <span class="badge badge-blue">
+                    {{ invoice.invoice_number }}
+                </span>
+            </div>
+
+            <div class="invoice-body">
+
+                <h4>{{ invoice.customer_name }}</h4>
+
+                {% if invoice.customer_email %}
+                <p style="color:#64748b;">{{ invoice.customer_email }}</p>
+                {% endif %}
+
+                <p>Items: {{ invoice.items.count }}</p>
+
+                <div class="invoice-total invoice-amount">
+                    Rs. {{ invoice.total_amount|floatformat:2 }}
+                </div>
+
+                <div class="invoice-date">
+                    {{ invoice.created_at|date:"d M Y" }}
+                </div>
+
+            </div>
+
+            <div class="actions">
+
+                <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-outline btn-sm">
+                    View
+                </a>
+
+                <a href="{% url 'edit_invoice' invoice.pk %}" class="btn btn-warning btn-sm">
+                    Edit
+                </a>
+
+                <a href="{% url 'download_pdf' invoice.pk %}" class="btn btn-success btn-sm">
+                    PDF
+                </a>
+
+                <a href="{% url 'delete_invoice' invoice.pk %}" class="btn btn-danger btn-sm">
+                    Delete
+                </a>
+
+            </div>
+
+        </div>
+
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <div style="text-align:center;padding:4rem 2rem;">
-    <div style="font-size:4rem;margin-bottom:1rem;">📋</div>
-    <h3 style="color:#1e293b;margin-bottom:0.5rem;">No invoices yet</h3>
-    <p style="color:#64748b;margin-bottom:1.5rem;">Create your first invoice to get started</p>
-    <a href="{% url 'create_invoice' %}" class="btn btn-primary">+ Create First Invoice</a>
-  </div>
-  {% endif %}
+
+    </div>
+
+    {% else %}
+
+    <div style="text-align:center;padding:3rem;">
+        <h3>No invoices found</h3>
+        <p>Create your first invoice</p>
+    </div>
+
+    {% endif %}
+
 </div>
+
+<!-- JS TOTAL CALC -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    let total = 0;
+
+    document.querySelectorAll('.invoice-amount').forEach(el => {
+        let amount = el.innerText
+            .replace('Rs.', '')
+            .replace(/,/g, '')
+            .trim();
+
+        total += parseFloat(amount) || 0;
+    });
+
+    document.getElementById('monthly-total').innerText =
+        'Rs. ' + total.toFixed(2);
+
+});
+</script>
+
 {% endblock %}

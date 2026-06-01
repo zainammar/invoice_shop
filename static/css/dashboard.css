@@ -1,0 +1,141 @@
+
+.dashboard-stats{
+    display:grid;
+    gap:1rem;
+    margin-bottom:20px;
+}
+
+.stat-card{
+    text-align:center;
+    padding:20px;
+}
+
+.stat-number{
+    font-size:2rem;
+    font-weight:800;
+    color:#4f46e5;
+}
+
+.stat-success{ color:#22c55e; }
+.stat-warning{ color:#f59e0b; }
+
+.stat-label{
+    font-size:0.85rem;
+    color:#64748b;
+}
+
+.dashboard-filter{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.filter-form{
+    display:flex;
+    gap:10px;
+}
+
+.filter-form input{
+    padding:8px;
+    border:1px solid #ddd;
+    border-radius:6px;
+}
+
+.invoice-grid{
+    display:grid;
+    gap:20px;
+}
+
+.invoice-card{
+    padding:20px;
+}
+
+.invoice-total{
+    font-size:1.2rem;
+    font-weight:700;
+    color:#16a34a;
+}
+
+.actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:10px;
+}
+
+.bg-2{
+    background-color:#205a94;
+    padding:20px;
+    border-radius:8px;
+}
+
+@media screen and (min-width: 768px) {
+  
+    /* 1 column, 1 row (remains the same) */
+    .row-1 {
+        grid-template-columns: 1fr;
+       
+    }
+  
+    /* 2 columns, 1 row */
+    .row-2 {
+        grid-template-columns: 1fr 1fr;
+        
+        
+    }
+  
+    /* 3 columns, 1 row */
+    .row-3 {
+        grid-template-columns: 1fr 1fr 1fr;
+       
+    }
+  
+    /* 4 columns, 1 row */
+    .row-4 {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+       
+    }
+  
+    /* 5 columns, 1 row */
+    .row-5 {
+      grid-template-columns: 1fr 2fr 1fr 1fr;
+     
+  }
+
+      /*6 columns, 1 row */
+      .row-6 {
+        grid-template-columns: 1fr 3fr 1fr;
+       
+    }
+
+        /*6 columns, 1 row */
+        .row-7 {
+          grid-template-columns: 1fr 2fr 2fr 1fr;
+         
+      }
+
+       /*6 columns, 1 row */
+       .row-8 {
+        grid-template-columns: 2fr 2fr;
+       
+    }
+
+        /*6 columns, 1 row */
+        .row-9 {
+          grid-template-columns: 3fr 1fr;
+         
+      }
+  
+  
+  }
+  
+  
+  .grid-item img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }

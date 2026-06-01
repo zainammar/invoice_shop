@@ -51,6 +51,11 @@ DATABASES = {
 }
 STATIC_URL = '/static/'
 LOGIN_URL = '/login/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Karachi'
