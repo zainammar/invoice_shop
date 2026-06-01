@@ -28,6 +28,7 @@
       <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:#1a1a2e;border-bottom:2px solid #f1f5f9;padding-bottom:0.5rem;">👤 Customer Info</h3>
       <div class="form-group">
         <label>Customer Name *</label>
+        <img src="{{ company_profile.company_logo.url }}" alt="Logo" class="brand-logo-img">
         <input type="text" name="customer_name" class="form-control" value="{{ invoice.customer_name }}" required>
       </div>
       <div class="form-group">

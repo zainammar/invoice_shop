@@ -30,7 +30,28 @@
     <div style="color:#64748b;font-size:0.85rem;margin-top:4px;">Member Since</div>
   </div>
 </div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+    
+  <h3>Invoices</h3>
 
+  <form method="GET">
+      <input type="month"
+             name="month"
+             value="{{ request.GET.month }}"
+             style="padding:8px;border:1px solid #ddd;border-radius:6px;">
+
+      <button type="submit"
+              class="btn btn-primary btn-sm">
+          Filter
+      </button>
+
+      <a href="{% url 'dashboard' %}"
+         class="btn btn-outline btn-sm">
+          Clear
+      </a>
+  </form>
+
+</div>
 <div class="card">
   {% if invoices %}
   <div style="overflow-x:auto;">
