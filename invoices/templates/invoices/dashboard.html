@@ -21,8 +21,24 @@
         </a>
     </div>
   </div>
-    <!-- STATS -->
-    <div class="row-3 content-grid bg-2">
+    <!-- STATS
+     
+      <div class="content-grid bg-2 row-3">
+     <div class="grid-item-1">
+    
+
+          </div>
+    <div class="grid-item-1">
+    
+
+          </div>
+    </div>
+
+
+    -->
+
+    
+    <div class="content-grid bg-2 row-3">
       <div class="grid-item-1">
     <div class="dashboard-stats">
 
@@ -51,6 +67,10 @@
     </div>
 
     <!-- FILTER -->
+    <div class="content-grid bg-3 row-3">
+        <div class="grid-item-1"> </div>
+
+        <div class="grid-item-1"> 
     <div class="dashboard-filter">
 
         <h3>Invoices</h3>
@@ -69,12 +89,14 @@
 
         </form>
 
-    </div>
+    </div>  </div>
+
+</div>
 
     <!-- INVOICES GRID -->
     {% if invoices %}
 
-    <div class="invoice-grid row-3">
+    <div class="invoice-grid row-3 ">
 
         {% for invoice in invoices %}
 
@@ -111,19 +133,19 @@
                 <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-outline btn-sm">
                     View
                 </a>
-
+                <br>
                 <a href="{% url 'edit_invoice' invoice.pk %}" class="btn btn-warning btn-sm">
                     Edit
                 </a>
-
+                <br>
                 <a href="{% url 'download_pdf' invoice.pk %}" class="btn btn-success btn-sm">
                     PDF
                 </a>
-
+                <br>
                 <a href="{% url 'delete_invoice' invoice.pk %}" class="btn btn-danger btn-sm">
                     Delete
                 </a>
-
+                <br>
             </div>
 
         </div>
@@ -131,7 +153,7 @@
         {% endfor %}
 
     </div>
-
+    <br>
     {% else %}
 
     <div style="text-align:center;padding:3rem;">
