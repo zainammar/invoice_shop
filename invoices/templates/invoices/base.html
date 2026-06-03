@@ -6,80 +6,120 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 <title>{% block title %}Invoice Shop{% endblock %}</title>
-<style>
-  :root {
-    --primary: #1a1a2e; --accent: #4f46e5; --accent-light: #818cf8;
-    --danger: #ef4444; --success: #22c55e; --warning: #f59e0b;
-    --bg: #f0f2f5; --card: #ffffff; --border: #e2e8f0;
-    --text: #1e293b; --muted: #64748b;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
- 
-</style>
 {% block extra_style %}{% endblock %}
 </head>
 <body>
-    <div class="content-grid bg-3 row-3">
-        <div class="grid-item-1"> 
-          {% if user.is_authenticated %}
-        </div>
-        <div class="grid-item-1"> 
-            <!-- ── LEFT: Company Logo + Name ── -->
-  <a class="brand" href="{% url 'dashboard' %}">
-    {% if company_profile and company_profile.company_logo %}
-      <img src="{{ company_profile.company_logo.url }}" alt="Logo" class="brand-logo-img">
-    {% else %}
-      <div class="brand-logo-placeholder">📄</div>
-      </div> 
-
-    </div>
-
-<nav class="navbar">
-
- 
-    {% endif %}
-    <div class="brand-text">
-      <span class="company-name">
-        {% if company_profile %}{{ company_profile.company_name }}{% else %}Invoice Shop{% endif %}
-      </span>
-      <span class="brand-sub">Invoice Shop</span>
-    </div>
-  </a>
-
-  <!-- ── RIGHT: Nav Links + User Avatar ── -->
-  <div class="nav-links">
-    <a href="{% url 'dashboard' %}" ...>🏠 Dashboard</a>
-<a href="{% url 'products' %}" ...>📦 Products</a>
-<a href="{% url 'monthly_report' %}" {% if 'report' in request.resolver_match.url_name %}class="active"{% endif %}>📊 Reports</a>  ← ADD THIS
-<a href="{% url 'create_invoice' %}" class="btn-new">+ New Invoice</a>
-    <!-- User Avatar Chip -->
-    <a href="{% url 'profile_settings' %}" class="user-chip" title="Profile & Logo Settings">
-      {% if company_profile and company_profile.user_avatar %}
-        <img src="{{ company_profile.user_avatar.url }}" alt="Avatar" class="user-avatar-img">
-      {% else %}
-        <div class="user-avatar-placeholder">{{ user.username|first }}</div>
-      {% endif %}
-      <span class="user-chip-name">{{ user.username }}</span>
-    </a>
-    
-    <a href="{% url 'logout' %}" style="color:rgba(255,255,255,0.55);font-size:0.82rem;">Logout</a>
-  </div>
-
-</nav>
-{% endif %}
-
-<div class="{% if user.is_authenticated %}container{% endif %}">
-  {% if messages %}
-  <div class="messages">
-    {% for msg in messages %}
-    <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
-    {% endfor %}
-  </div>
+  {% if user.is_authenticated %}
+  
+  <nav class="navbar">
+  
+      <!-- Brand -->
+      <a class="brand" href="{% url 'dashboard' %}">
+          {% if company_profile and company_profile.company_logo %}
+              <img src="{{ company_profile.company_logo.url }}"
+                   alt="Logo"
+                   class="brand-logo-img">
+          {% else %}
+              <div class="brand-logo-placeholder">📄</div>
+          {% endif %}
+  
+          <div class="brand-text">
+              <span class="company-name">
+                  {% if company_profile %}
+                      {{ company_profile.company_name }}
+                  {% else %}
+                      Invoice Shop
+                  {% endif %}
+              </span>
+  
+              <span class="brand-sub">
+                  Invoice Management
+              </span>
+          </div>
+      </a>
+  
+      <!-- Mobile Toggle -->
+      <button class="menu-toggle" onclick="toggleMenu()">
+          ☰
+      </button>
+  
+      <!-- Menu -->
+      <div class="nav-links" id="navMenu">
+  
+          <a href="{% url 'dashboard' %}">
+              🏠 Dashboard
+          </a>
+  
+          <a href="{% url 'products' %}">
+              📦 Products
+          </a>
+  
+          <a href="{% url 'monthly_report' %}">
+              📊 Reports
+          </a>
+  
+          <a href="{% url 'create_invoice' %}" class="btn-new">
+              ➕ Invoice
+          </a>
+  
+          <a href="{% url 'profile_settings' %}" class="user-chip">
+  
+              {% if company_profile and company_profile.user_avatar %}
+                  <img src="{{ company_profile.user_avatar.url }}"
+                       class="user-avatar-img">
+              {% else %}
+                  <div class="user-avatar-placeholder">
+                      {{ user.username|first }}
+                  </div>
+              {% endif %}
+  
+              <span class="user-chip-name">
+                  {{ user.username }}
+              </span>
+          </a>
+  
+          <a href="{% url 'logout' %}" class="btn btn-danger btn-sm">
+              Logout
+          </a>
+  
+      </div>
+  
+  </nav>
+  
   {% endif %}
-  {% block content %}{% endblock %}
-</div>
+  
+  
 
-</body>
-</html>
+
+<div class="content-grid">
+  <div class="grid-item-1">
+ <!-- <button>
+  <a href="{% url 'logout' %}" style="color:rgba(255,255,255,0.55);font-size:0.82rem;">Logout</a>
+ </button>
+   -->
+
+       </div>
+ <div class="grid-item-1">
+  <div class="{% if user.is_authenticated %}container{% endif %}">
+    {% if messages %}
+    <div class="messages">
+      {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </div>
+  
+
+       </div>
+ </div>
+ <script>
+  function toggleMenu(){
+      document
+          .getElementById("navMenu")
+          .classList
+          .toggle("show");
+  }
+  </script>

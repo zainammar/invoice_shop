@@ -5,22 +5,29 @@
 
 {% block content %}
 
+<div class="content-grid bg-2 row-3">
+    <div class="grid-item-1">
+     
+         </div>
+         <div class="grid-item-1">
+            <div class="page-header">
+                <div>
+                    <h1>📊 Dashboard</h1>
+                    <p>Welcome {{ user.username }}</p>
+                </div>
+        
+                <a href="{% url 'create_invoice' %}" class="btn btn-primary">
+                    + Create Invoice
+                </a>
+            </div>
+         </div>
+         <div class="grid-item-1">
+     
+         </div>
+
+   </div>
 
 
-<div class="container">
-
-    <!-- HEADER -->
-    <div class="page-header">
-        <div>
-            <h1>📊 Dashboard</h1>
-            <p>Welcome {{ user.username }}</p>
-        </div>
-
-        <a href="{% url 'create_invoice' %}" class="btn btn-primary">
-            + Create Invoice
-        </a>
-    </div>
-  </div>
     <!-- STATS
      
       <div class="content-grid bg-2 row-3">
@@ -28,16 +35,9 @@
     
 
           </div>
-    <div class="grid-item-1">
-    
 
-          </div>
     </div>
-
-
     -->
-
-    
     <div class="content-grid bg-2 row-3">
       <div class="grid-item-1">
     <div class="dashboard-stats">
@@ -113,7 +113,7 @@
                 <h4>{{ invoice.customer_name }}</h4>
 
                 {% if invoice.customer_email %}
-                <p style="color:#64748b;">{{ invoice.customer_email }}</p>
+                <p style="color:#000000;">{{ invoice.customer_email }}</p>
                 {% endif %}
 
                 <p>Items: {{ invoice.items.count }}</p>
@@ -129,23 +129,12 @@
             </div>
 
             <div class="actions">
-
+                <button>
                 <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-outline btn-sm">
                     View
                 </a>
-                <br>
-                <a href="{% url 'edit_invoice' invoice.pk %}" class="btn btn-warning btn-sm">
-                    Edit
-                </a>
-                <br>
-                <a href="{% url 'download_pdf' invoice.pk %}" class="btn btn-success btn-sm">
-                    PDF
-                </a>
-                <br>
-                <a href="{% url 'delete_invoice' invoice.pk %}" class="btn btn-danger btn-sm">
-                    Delete
-                </a>
-                <br>
+            </button>
+               
             </div>
 
         </div>
