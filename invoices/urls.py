@@ -21,4 +21,10 @@ urlpatterns = [
     path('settings/', views.profile_settings, name='profile_settings'),
     path('reports/', views.monthly_report, name='monthly_report'),
     path('reports/pdf/', views.report_pdf, name='report_pdf'),
+     path(
+        'payment-proof/',
+        views.upload_payment_proof,
+        name='upload_payment_proof'
+    ),
 ]
+

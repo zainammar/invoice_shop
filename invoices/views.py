@@ -1675,3 +1675,32 @@ def profile_settings(request):
 
 
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+from .models import PaymentProof
+
+
+@login_required
+def upload_payment_proof(request):
+    if request.method == "POST":
+        proof_file = request.FILES.get("proof_file")
+        amount = request.POST.get("amount") or None
+
+        if proof_file:
+            PaymentProof.objects.create(
+                user=request.user,
+                proof_file=proof_file,
+                amount=amount
+            )
+
+            return redirect("upload_payment_proof")
+
+    proofs = PaymentProof.objects.filter(
+        user=request.user
+    ).order_by("-uploaded_at")
+
+    return render(
+        request,
+        "invoices/upload_payment_proof.html",
+        {"proofs": proofs}
+    )

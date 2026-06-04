@@ -270,7 +270,7 @@ button.btn{
 
 button{
   background:#fecb00;
-  color:white;
+  color:rgb(0, 0, 0);
   border:none;
   padding:10px 20px;
   border-radius:8px;
@@ -369,7 +369,7 @@ button:hover{
 }
 
 .btn-new:hover{
-  background:#1d4ed8;
+  background:#ea5f02;
 }
 
 .menu-toggle{
@@ -511,3 +511,14 @@ button:hover{
       grid-template-columns:1fr;
   }
 }
+
+
+
+::file-selector-button {
+  border: 2px solid black;
+  padding: 5px 10px;
+  border-radius: 5px;
+  background-color: #2191FB;
+  color:white;
+}
+

@@ -1,0 +1,115 @@
+{% extends 'invoices/base.html' %}
+
+{% block content %}
+<div class="content-grid bg-1 row-3">
+    <div class="grid-item-1">
+     
+         </div>
+         <div class="grid-item-1">
+     
+<div class="container">
+    <h2>Amount</h2>
+    <input type="number" step="0.01" name="amount">
+    <h2>Upload Payment Proof</h2>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div>
+            <label>Amount</label>
+            <br>
+            <input type="number"
+                   step="0.01"
+                   name="amount">
+        </div>
+
+        <div>
+            <br>
+            <label>Payment Proof</label>
+            
+            <br> <br>
+            <input type="file"
+                   name="proof_file"
+                   required>
+        </div>
+        <br>
+        <button class="btn" type="submit">
+            Upload
+        </button>
+    </form>
+
+         </div>
+         <div class="grid-item-1">
+     
+         </div>
+
+
+        </div>
+
+    <hr>
+<div class="content-grid bg-1 row-3">
+    <div class="grid-item-1">
+     
+         </div>
+         <div class="grid-item-1">
+            <h3>My Uploaded Proofs</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>File</th>
+                    </tr>
+                </thead>
+        
+                <tbody>
+                    {% for proof in proofs %}
+                    <tr>
+                        <td>{{ proof.uploaded_at|date:"d M Y" }}</td>
+                        <td>Rs {{ proof.amount }}</td>
+        
+                        <td>
+                            {% if proof.is_approved %}
+                                Approved
+                            {% else %}
+                                Pending
+                            {% endif %}
+                        </td>
+        
+                        <td>
+                            <a href="{{ proof.proof_file.url }}" target="_blank">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4">
+                            No payment proofs uploaded yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        
+        </div>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+         </div>
+         <div class="grid-item-1">
+     
+         </div>
+
+
+        </div>
+   
+
+
+{% endblock %}

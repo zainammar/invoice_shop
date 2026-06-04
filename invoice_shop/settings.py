@@ -1,6 +1,7 @@
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 SECRET_KEY = 'django-invoice-shop-secret-key-2024'
 DEBUG = True
 ALLOWED_HOSTS = ['*']
@@ -43,26 +44,27 @@ TEMPLATES = [{
 }]
 
 WSGI_APPLICATION = 'invoice_shop.wsgi.application'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# Media Files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 LOGIN_URL = '/login/'
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
-
-
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Karachi'
 USE_I18N = True
 USE_TZ = True
-MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
-import os
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
