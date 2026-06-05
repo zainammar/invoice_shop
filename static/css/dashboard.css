@@ -40,6 +40,15 @@ a{
   margin-bottom:20px;
   padding: 20px;
 }
+
+
+
+.bg-fotter{
+  background: #010100;
+  border-radius:15px;
+  margin-bottom:20px;
+  padding: 20px;
+}
 .heading-1{
     font-size:1rem;
     font-weight:900;margin-bottom:1rem;
@@ -52,6 +61,17 @@ a{
 .text-1{
   color:#ffffff;
   font-weight:400;
+  font-size:1.2rem;
+}
+
+.page-title{
+  color:#ffffff;
+  font-weight:100;
+  font-size:1.2rem;
+}
+.page-subtitle{
+  color:#ffffff;
+  font-weight:100;
   font-size:1.2rem;
 }
 /* ===== GRID SYSTEM ===== */
@@ -88,7 +108,7 @@ a{
   }
 
   .row-5{
-      grid-template-columns:1fr 2fr 1fr 1fr;
+    grid-template-columns:1fr 1fr 1fr 1fr 1fr;
   }
 
   .row-6{
@@ -106,6 +126,8 @@ a{
   .row-9{
       grid-template-columns:3fr 1fr;
   }
+   
+
 }
 
 @media (max-width:767px){
@@ -288,7 +310,7 @@ button{
 }
 
 button:hover{
-  background:#432534;
+  background:#ff5100;
   color:white;
 }
 
@@ -595,4 +617,23 @@ select option[value=""] { color:#9ca3af; }
 .sr-cell {
     font-weight: 700;
     text-align: center;
+}
+
+
+.site-footer {
+  background: #1e293b;
+  color: #fff;
+  padding: 20px;
+  margin-top: 40px;
+  text-align: center;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.site-footer p {
+  margin: 0;
+  font-size: 14px;
 }

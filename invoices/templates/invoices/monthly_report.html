@@ -1,12 +1,13 @@
 {% extends 'invoices/base.html' %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
 {% block title %}Revenue Report {{ selected_year }} — Invoice Shop{% endblock %}
 {% block extra_style %}
 <style>
   /* ── Layout ── */
   .report-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; }
-  .year-tabs { display:flex; gap:6px; flex-wrap:wrap; }
-  .year-tab { padding:6px 16px; border-radius:20px; font-size:0.85rem; font-weight:600; text-decoration:none; color:var(--muted); background:#f1f5f9; transition:all 0.2s; }
-  .year-tab.active, .year-tab:hover { background:var(--accent); color:white; }
+  .year-tabs { display:flex; gap:20px; flex-wrap:wrap; }
+  
 
   /* ── Stat Cards ── */
   .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.5rem; }
@@ -86,58 +87,72 @@
 {% endblock %}
 
 {% block content %}
-
 <!-- ── Page Header ── -->
+<div class="content-grid bg-2 row-6">
+  <div class="grid-item-1">
+ 
+
+       </div>
+       <div class="grid-item-1">
+        <div>
+          <h1 class="page-title">📊 Revenue Report</h1>
+          {% if company.company_logo %}
+          <img src="{{ company_profile.company_logo.url }}" alt="Logo" class="brand-logo-img">
+      {% endif %}
+          <p class="page-subtitle">Year <strong>{{ selected_year }}</strong> — full breakdown of your business performance</p>
+        </div>
+
+       </div>
+       <div class="grid-item-1">
+ 
+
+       </div>
+ </div>
+ <div class="content-grid bg-4 row-5">
+  <div class="grid-item-1">
+ 
+
+       </div>
+
+       <div class="grid-item-1">
+ 
+        <div class="year-tabs">
+          {% for yr in available_years %}
+          <button>
+            <a href="?year={{ yr }}" class="year-tab {% if yr == selected_year %}active{% endif %}">{{ yr }}</a>
+            {% endfor %}
+          </button>
+        
+        </div>
+
+       </div>
+       <div class="grid-item-1">
+        
+    <!-- PDF Download -->
+    <button>
+        <a href="{% url 'report_pdf' %}?year={{ selected_year }}">
+           Download PDF
+      </button>        </a>
+       </div>
+       <div class="grid-item-1">
+      <button>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline">Dashboard
+      </button></a>
+       </div>
+       <div class="grid-item-1">
+ 
+
+       </div>
+
+ </div>
+
 <div class="report-header">
-  <div>
-    <h1 class="page-title">📊 Revenue Report</h1>
-    <img src="{{ company_profile.company_logo.url }}" alt="Logo" class="brand-logo-img">
-    <p class="page-subtitle">Year <strong>{{ selected_year }}</strong> — full breakdown of your business performance</p>
-  </div>
+
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
     <!-- Year selector -->
-    <div class="year-tabs">
-      {% for yr in available_years %}
-      <a href="?year={{ yr }}" class="year-tab {% if yr == selected_year %}active{% endif %}">{{ yr }}</a>
-      {% endfor %}
-    </div>
-    <!-- PDF Download -->
-    <a href="{% url 'report_pdf' %}?year={{ selected_year }}" class="btn btn-pdf">
-      📥 Download PDF
-    </a>
-    <a href="{% url 'dashboard' %}" class="btn btn-outline">← Dashboard</a>
-  </div>
-</div>
 
-<!-- ── Stat Cards ── -->
-<div class="stats-grid">
-  <div class="stat-card blue">
-    <div class="icon">💰</div>
-    <div class="label">Total Revenue</div>
-    <div class="value">Rs. {{ total_revenue|floatformat:0 }}</div>
-    <div class="sub">{{ selected_year }} full year</div>
-    <div class="bg-icon">💰</div>
-  </div>
-  <div class="stat-card green">
-    <div class="icon">📄</div>
-    <div class="label">Total Invoices</div>
-    <div class="value">{{ total_invoices }}</div>
-    <div class="sub">invoices issued</div>
-    <div class="bg-icon">📄</div>
-  </div>
-  <div class="stat-card amber">
-    <div class="icon">📈</div>
-    <div class="label">Avg per Invoice</div>
-    <div class="value">Rs. {{ avg_invoice|floatformat:0 }}</div>
-    <div class="sub">average value</div>
-    <div class="bg-icon">📈</div>
-  </div>
-  <div class="stat-card rose">
-    <div class="icon">🏆</div>
-    <div class="label">Best Month</div>
-    <div class="value">{{ best_month }}</div>
-    <div class="sub">Rs. {{ best_month_rev|floatformat:0 }}</div>
-    <div class="bg-icon">🏆</div>
+
+   
   </div>
 </div>
 
