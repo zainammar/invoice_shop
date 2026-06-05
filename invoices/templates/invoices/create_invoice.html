@@ -1,103 +1,184 @@
 {% extends 'invoices/base.html' %}
-{% block title %}New Invoice — Invoice Shop{% endblock %}
+{% block title %}Invoice{% endblock %}
 {% block extra_style %}
-<style>
-  .items-table { width:100%;border-collapse:collapse; }
-  .items-table th { background:#f1f5f9;color:#475569;padding:10px 12px;text-align:left;font-size:0.8rem;font-weight:700;text-transform:uppercase;border-bottom:2px solid #e2e8f0; }
-  .items-table td { padding:8px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle; }
-  .items-table input, .items-table select { width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:0.88rem;outline:none;background:white; }
-  .items-table input:focus, .items-table select:focus { border-color:#4f46e5; }
-  .sr-cell { width:44px;text-align:center;font-weight:700;color:#94a3b8; }
-  .remove-btn { background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:0.85rem; }
-  .total-bar { background:linear-gradient(135deg,#1a1a2e,#16213e);color:white;border-radius:10px;padding:1.2rem 1.5rem;display:flex;justify-content:space-between;align-items:center;margin-top:1rem; }
-  .no-products-warn { background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:1rem;margin-bottom:1rem;font-size:0.9rem;color:#92400e; }
-  select option[value=""] { color:#9ca3af; }
-</style>
+
 {% endblock %}
 {% block content %}
 
-<div class="page-header">
-  <div>
-    <h1 class="page-title">+ Create New Invoice</h1>
-    <p class="page-subtitle">Select products from your catalog and fill in customer details</p>
-  </div>
-  <a href="{% url 'dashboard' %}" class="btn btn-outline">← Back</a>
-</div>
+ <div class="content-grid bg-2 row-6">
+  <div class="grid-item-1">
+ 
 
-{% if not products %}
-<div class="no-products-warn">
-  ⚠️ <strong>No products in your catalog!</strong>
-  <a href="{% url 'products' %}" style="color:#92400e;font-weight:700;">Add products first →</a>
-  — phir invoice mein dropdown se select karein.
-</div>
-{% endif %}
+       </div>
+       <div class="grid-item-1">
+ 
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">+ Create New Invoice</h1>
+            <p class="page-subtitle">Select products from your catalog and fill in customer details</p>
+          </div>
+          <a href="{% url 'dashboard' %}" class="btn btn-outline">← Back</a>
+        </div>
+        
+       </div>
+       <div class="grid-item-1">
+ 
 
-<form method="post" id="invoiceForm">
-  {% csrf_token %}
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.5rem;">
-    <div class="card">
-      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:#1a1a2e;border-bottom:2px solid #f1f5f9;padding-bottom:0.5rem;">👤 Customer Info</h3>
-      <div class="form-group">
-        <label>Customer Name *</label>
-        <input type="text" name="customer_name" class="form-control" placeholder="e.g. Ahmed Ali">
+       </div>
+ </div>
+ <div class="content-grid bg-1 row-7">
+  <div class="grid-item-1">  </div>
+  <div class="grid-item-1">
+ 
+    {% if not products %}
+    <div class="no-products-warn">
+      ⚠️ <strong>No products in your catalog!</strong>
+      <a href="{% url 'products' %}" style="color:#92400e;font-weight:700;">Add products first →</a>
+      — phir invoice mein dropdown se select karein.
+    </div>
+    {% endif %}
+    
+    <form method="post" id="invoiceForm">
+      {% csrf_token %}
+    
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.5rem;">
+        <div class="card">
+          <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:#1a1a2e;border-bottom:2px solid #f1f5f9;padding-bottom:0.5rem;">👤 Customer Info</h3>
+          <div class="form-group">
+            <label>Customer Name *</label>
+            <input type="text" name="customer_name" class="form-control" placeholder="e.g. Ahmed Ali">
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input type="text" name="customer_email" class="form-control" placeholder="customer@email.com">
+         
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label>Address</label>
+            <textarea name="customer_address" class="form-control" rows="3" placeholder="Customer address..."></textarea>
+          </div>
+        </div>
+       </div>
       </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="text" name="customer_email" class="form-control" placeholder="customer@email.com">
-     
+  
+      <div class="grid-item-1">
+        <br>
+        <div class="card" style="display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#1a1a2e,#0f3460);color:white;gap:0.5rem;">
+          <div style="font-size:3.5rem;">📄</div>
+          <div style="font-size:1.1rem;font-weight:700;">New Invoice</div>
+          <div style="opacity:0.5;font-size:0.8rem;" id="invoiceDateDisplay"></div>
+          <div style="margin-top:0.8rem;background:rgba(255,255,255,0.1);border-radius:8px;padding:0.6rem 1rem;font-size:0.82rem;text-align:center;">
+            📦 {{ products.count }} product{{ products.count|pluralize }} in catalog
+          </div>
+        </div>
       </div>
-      <div class="form-group" style="margin-bottom:0;">
-        <label>Address</label>
-        <textarea name="customer_address" class="form-control" rows="3" placeholder="Customer address..."></textarea>
-      </div>
+      <div class="grid-item-1">  </div>
     </div>
 
-    <div class="card" style="display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#1a1a2e,#0f3460);color:white;gap:0.5rem;">
-      <div style="font-size:3.5rem;">📄</div>
-      <div style="font-size:1.1rem;font-weight:700;">New Invoice</div>
-      <div style="opacity:0.5;font-size:0.8rem;" id="invoiceDateDisplay"></div>
-      <div style="margin-top:0.8rem;background:rgba(255,255,255,0.1);border-radius:8px;padding:0.6rem 1rem;font-size:0.82rem;text-align:center;">
-        📦 {{ products.count }} product{{ products.count|pluralize }} in catalog
-      </div>
-    </div>
-  </div>
 
-  <div class="card">
-    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:#1a1a2e;border-bottom:2px solid #f1f5f9;padding-bottom:0.5rem;">📦 Invoice Items</h3>
-    <div style="overflow-x:auto;">
-      <table class="items-table">
-        <thead>
-          <tr>
-            <th style="width:44px;">SR#</th>
-            <th style="min-width:200px;">Select Product</th>
-            <th style="width:95px;">Qty</th>
-            <th style="width:130px;">Unit Price (Rs.)</th>
-            <th style="width:130px;">Amount (Rs.)</th>
-            <th style="width:48px;"></th>
-          </tr>
-        </thead>
-        <tbody id="itemsBody">
-          <tr>
-            <td class="sr-cell">1</td>
-            <td>
-              <input type="hidden" name="product_id[]" class="pid" value="">
-              <select class="prod-select" onchange="onProductSelect(this)">
-                <option value="">— Select product —</option>
-                {% for p in products %}
-                <option value="{{ p.id }}" data-price="{{ p.unit_price }}" data-name="{{ p.product_name|escapejs }}">{{ p.product_name }} — Rs. {{ p.unit_price }}</option>
-                {% endfor %}
-              </select>
-              <input type="text" name="product_name[]" class="pname" placeholder="Or type product name" style="margin-top:4px;" required>
-            </td>
-            <td><input type="number" name="quantity[]" class="qty" value="1" min="1" required></td>
-            <td><input type="number" name="unit_price[]" class="price" value="" step="0.01" min="0" placeholder="0.00" required></td>
-            <td><input type="text" class="amount" readonly value="" placeholder="0.00" style="background:#f8fafc;font-weight:700;color:#4f46e5;"></td>
-            <td><button type="button" class="remove-btn" onclick="removeRow(this)">✕</button></td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="content-grid  row-6">
+      <div class="grid-item-1">  </div>
+      <div class="grid-item-1">  
+        <h3 class="heading-1">📦 Invoice Items</h3>
+      </div>
+      <div class="grid-item-1">  </div>
     </div>
+
+     <div class="content-grid bg-1 row-6">
+      <div class="grid-item-1">  </div>
+      <div class="grid-item-1"> 
+        <div class="card">
+
+          <!-- Header -->
+          <div class="items-header">
+              <div>SR#</div>
+              <div>Select Product</div>
+              <div>Qty</div>
+              <div>Unit Price (Rs.)</div>
+              <div>Amount (Rs.)</div>
+              <div></div>
+          </div>
+      
+          <!-- Body -->
+          <div id="itemsBody">
+      
+              <div class="item-row">
+                  <div class="sr-cell">1</div>
+      
+                  <div>
+                      <input type="hidden" name="product_id[]" class="pid" value="">
+      
+                      <select class="prod-select" onchange="onProductSelect(this)">
+                          <option value="">— Select product —</option>
+                          {% for p in products %}
+                          <option value="{{ p.id }}"
+                                  data-price="{{ p.unit_price }}"
+                                  data-name="{{ p.product_name|escapejs }}">
+                              {{ p.product_name }} — Rs. {{ p.unit_price }}
+                          </option>
+                          {% endfor %}
+                      </select>
+      
+                      <input type="text"
+                             name="product_name[]"
+                             class="pname"
+                             placeholder="Or type product name"
+                             required>
+                  </div>
+      
+                  <div>
+                      <input type="number"
+                             name="quantity[]"
+                             class="qty"
+                             value="1"
+                             min="1"
+                             required>
+                  </div>
+      
+                  <div>
+                      <input type="number"
+                             name="unit_price[]"
+                             class="price"
+                             value=""
+                             step="0.01"
+                             min="0"
+                             placeholder="0.00"
+                             required>
+                  </div>
+      
+                  <div>
+                      <input type="text"
+                             class="amount"
+                             readonly
+                             value=""
+                             placeholder="0.00">
+                  </div>
+      
+                  <div>
+                      <button type="button"
+                              class="remove-btn"
+                              onclick="removeRow(this)">
+                          ✕
+                      </button>
+                  </div>
+      
+              </div>
+      
+          </div>
+      
+      </div>
+      
+      </div>
+      <div class="grid-item-1">  </div>
+    </div> 
+
+    
+
+
+ <div class="content-grid  row-7">
+    <div class="grid-item-1">  </div>
+  <div class="grid-item-1">
+ 
     <button type="button" onclick="addRow()" class="btn btn-outline" style="margin-top:1rem;">+ Add Row</button>
     <div class="total-bar">
       <span style="opacity:0.7;font-size:0.9rem;">GRAND TOTAL</span>
@@ -105,11 +186,18 @@
     </div>
   </div>
 
-  <div style="display:flex;justify-content:flex-end;gap:1rem;margin-top:1.5rem;">
-    <a href="{% url 'dashboard' %}" class="btn btn-outline">Cancel</a>
-    <button type="submit" class="btn btn-primary" style="font-size:1rem;padding:12px 28px;">💾 Save Invoice</button>
-  </div>
-</form>
+   
+       <div class="grid-item-1">
+        <div style="display:flex;justify-content:flex-end;gap:1rem;margin-top:1.5rem;">
+          <a href="{% url 'dashboard' %}" class="btn btn-outline">Cancel</a>
+          <button type="submit" class="btn btn-primary" style="font-size:1rem;padding:12px 28px;">💾 Save Invoice</button>
+        </div>
+      </form>
+     
+       <div class="grid-item-1">  </div>
+ </div>
+
+ 
 
 <script>
 

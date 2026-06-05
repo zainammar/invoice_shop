@@ -40,8 +40,15 @@ a{
   margin-bottom:20px;
   padding: 20px;
 }
+.heading-1{
+    font-size:1rem;
+    font-weight:900;margin-bottom:1rem;
+    color:#ffffff;
+    border-bottom:2px solid #f1f5f9;
+    padding-bottom:0.5rem;
+    text-align: center;
 
-
+}  
 .text-1{
   color:#ffffff;
   font-weight:400;
@@ -522,3 +529,70 @@ button:hover{
   color:white;
 }
 
+.items-table { width:100%;border-collapse:collapse; }
+.items-table th { background:#f1f5f9;color:#475569;padding:10px 12px;text-align:left;font-size:0.8rem;font-weight:700;text-transform:uppercase;border-bottom:2px solid #e2e8f0; }
+.items-table td { padding:8px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle; }
+.items-table input, .items-table select { width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:0.88rem;outline:none;background:white; }
+.items-table input:focus, .items-table select:focus { border-color:#4f46e5; }
+.sr-cell { width:44px;text-align:center;font-weight:700;color:#94a3b8; }
+.remove-btn { background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:0.85rem; }
+.total-bar { background:linear-gradient(135deg,#1a1a2e,#16213e);color:white;border-radius:10px;padding:1.2rem 1.5rem;display:flex;justify-content:space-between;align-items:center;margin-top:1rem; }
+.no-products-warn { background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:1rem;margin-bottom:1rem;font-size:0.9rem;color:#92400e; }
+select option[value=""] { color:#9ca3af; }
+
+
+
+
+.items-header,
+.item-row {
+    display: grid;
+    grid-template-columns:
+        50px
+        minmax(220px, 2fr)
+        90px
+        140px
+        140px
+        50px;
+    gap: 10px;
+    align-items: start;
+}
+
+.items-header {
+    font-weight: 700;
+    padding: 12px;
+
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.item-row {
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.item-row input,
+.item-row select {
+    width: 100%;
+}
+
+.pname {
+    margin-top: 4px;
+}
+
+.amount {
+    background: #f8fafc;
+    font-weight: 700;
+    color: #4f46e5;
+}
+
+.remove-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.sr-cell {
+    font-weight: 700;
+    text-align: center;
+}
