@@ -1,39 +1,42 @@
 {% extends 'invoices/base.html' %}
 {% block title %}Register — Invoice Shop{% endblock %}
 {% block content %}
-<div class="auth-wrapper">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <h1>📄 Invoice<span>Shop</span></h1>
-      <p>Create your free account</p>
-    </div>
-    {% if messages %}
-      {% for msg in messages %}
-      <div class="alert alert-error">{{ msg }}</div>
-      {% endfor %}
-    {% endif %}
-    <p class="auth-title">Create new account</p>
-    <form method="post">
-      {% csrf_token %}
-      <div class="form-group">
-        <label>Username</label>
-        <input type="text" name="username" class="form-control" placeholder="Choose a username" required autofocus>
-      </div>
-      <div class="form-group">
-        <label>Email (optional)</label>
-        <input type="email" name="email" class="form-control" placeholder="your@email.com">
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input type="password" name="password" class="form-control" placeholder="Choose a password" required>
-      </div>
-      <div class="form-group">
-        <label>Confirm Password</label>
-        <input type="password" name="confirm_password" class="form-control" placeholder="Repeat password" required>
-      </div>
-      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Create Account →</button>
-    </form>
-    <div class="auth-link">Already have an account? <a href="{% url 'login' %}">Login here</a></div>
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<div class="content-grid bg-2 row-1">
+  <div class="grid-item-1 heading-1">
+    
+    <h1>Tajir <span>Asani</span></h1>
+    <p>Professional Invoice Management</p>
+
+       </div>
+
+ </div> 
+<div class="content-grid bg-2 row-2">
+  <div class="grid-item-1">
+ 
+
+       </div>
+ <div class="grid-item-1">
+ 
+  <p class="auth-title">Account Request</p>
+
+  <div class="info">
+    New accounts can only be created by the administrator.
+    Please contact the administrator to obtain login credentials.
+    <br>   <br>
+    Contact: 03447092215
+  </div>
+
+  <div class="auth-link">
+    <a href="{% url 'login' %}">
+    <button type="submit" class="button2">Login →</button></a>
   </div>
 </div>
+</div>
+    
+      
+
+ 
+
 {% endblock %}
