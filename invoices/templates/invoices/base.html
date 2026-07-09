@@ -4,14 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'css/styleinvoice.css' %}">
 <title>{% block title %}Invoice Shop{% endblock %}</title>
 
 {% block extra_style %}{% endblock %}
 </head>
 <body>
   {% if user.is_authenticated %}
-  
+
+
   <nav class="navbar">
   
       <!-- Brand -->
@@ -90,14 +91,21 @@
   
 
 
-<div class="content-grid">
-  <div class="grid-item-1">
- <!-- <button>
-  <a href="{% url 'logout' %}" style="color:rgba(255,255,255,0.55);font-size:0.82rem;">Logout</a>
- </button>
-   -->
+  <div class="row-1 content-grid">
+    <div class="grid-item-1">
+        <h2>Toggle Dark/Light Mode</h2>
+        <button onclick="myFunction()">🌙 Night Mode</button>
+    
+           <script>
+           function myFunction() {
+              var element = document.body;
+              element.classList.toggle("dark-mode");
+           }
+           </script>
+           
+    </div>
 
-       </div>
+    
  <div class="grid-item-1">
   <div class="{% if user.is_authenticated %}container{% endif %}">
     {% if messages %}
@@ -105,14 +113,14 @@
       {% for msg in messages %}
       <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
       {% endfor %}
-    </div>
+    </div>   </div>
     {% endif %}
     {% block content %}{% endblock %}
   </div>
   
 
        </div>
- </div>
+
  <script>
   function toggleMenu(){
       document
@@ -142,12 +150,11 @@
             How its work
        
         </p>
-        <button>
+        
             <a href="https://youtube.com/@yourchannel" target="_blank">
                 YouTube Channel
             </a>
-        </button>
-          
+    
          </div>
    </div>
 
