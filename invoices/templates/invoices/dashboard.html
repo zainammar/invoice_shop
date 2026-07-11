@@ -95,46 +95,57 @@
 
     <!-- INVOICES GRID -->
     {% if invoices %}
+    <div class="invoice-grid row-1 ">
+        <div class="grid-item-1">
+            {% for invoice in invoices %}
+        </div>
+      
 
+    </div>
     <div class="invoice-grid row-3 ">
+        <div class="grid-item-1">
 
-        {% for invoice in invoices %}
+            <h4>{{ invoice.customer_name }}</h4>
+
+            {% if invoice.customer_email %}
+            <p>{{ invoice.customer_email }}</p>
+            {% endif %}
+
+        </div>
+        <div class="grid-item-1">
+
+            <p>Items: {{ invoice.items.count }}</p>
+
+            <div class="invoice-total invoice-amount">
+                Rs. {{ invoice.total_amount|floatformat:2 }}
+            </div>
+        </div>
+        <div class="grid-item-1">
+            <button>
+            <a href="{% url 'invoice_detail' invoice.pk %}">
+                View
+            </a>
+        </button>
+        </div>
+    </div>
+     
 
         <div class="card invoice-card">
 
-            <div class="invoice-header">
-                <span class="badge badge-blue">
-                    {{ invoice.invoice_number }}
-                </span>
-            </div>
-
+          
             <div class="invoice-body">
 
-                <h4>{{ invoice.customer_name }}</h4>
-
-                {% if invoice.customer_email %}
-                <p style="color:#000000;">{{ invoice.customer_email }}</p>
-                {% endif %}
-
-                <p>Items: {{ invoice.items.count }}</p>
-
-                <div class="invoice-total invoice-amount">
-                    Rs. {{ invoice.total_amount|floatformat:2 }}
-                </div>
 
                 <div class="invoice-date">
-                    {{ invoice.created_at|date:"d M Y" }}
+                 
                 </div>
 
             </div>
 
             <div class="actions">
-                <button>
-                <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-outline btn-sm">
-                    View
-                </a>
-            </button>
-               
+              
+              
+         
             </div>
 
         </div>

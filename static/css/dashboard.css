@@ -7,12 +7,7 @@ body{
 }
 
 /* ===== DASHBOARD BACKGROUND ===== */
-a{
-  text-decoration:none;
-  color: #000a04;
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: bold;
-}
+
 .bg-1{
   background: #B6BE9C;
   border-radius:15px;

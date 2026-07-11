@@ -125,75 +125,96 @@
     </div>
 
          </div>
+         
          <div class="grid-item-1">
    
+          <h3>
+            Saved Products
+            <span class="product-count">{{ products.count }}</span>
+          </h3>
 
          </div>
 
         </div>
-<br>
-        <div class="content-grid row-6">
+        <div class="content-grid row-1">
           <div class="grid-item-1">
    
-
           </div>
+          </div>
+<br>
+        <div class="content-grid row-3">
+        
          <div class="grid-item-1">
           <div class="card bg-1">
-            <br>
-            <h3 style="font-size:1.05rem;font-weight:700;color:#1a1a2e;margin-bottom:1rem;margin: 10px;">
-              Saved Products
-              <span class="product-count">{{ products.count }}</span>
-            </h3>
-        
+
             {% if products %}
-            <div class="products-grid bg-1">
+            <div class="products-grid">
               {% for product in products %}
-              <div class="product-card">
+       
+              <div class="product-id">
+                #{{ forloop.counter }}
+            </div>
+            </div>
+          </div>
+          <div class="product-info">
+            <h4>{{ product.product_name }}</h4>
+            <small>
+                Added {{ product.created_at|date:"d M Y" }}
+            </small>
+        </div>
+        <div class="product-price">
+          Rs. {{ product.unit_price|floatformat:2 }}
+      </div>
+        </div>
+                
+                
+         <div class="grid-item-1">
+                
           
-                  <div class="product-id">
-                      #{{ forloop.counter }}
-                  </div>
-          
-                  <div class="product-info">
-                      <h4>{{ product.product_name }}</h4>
-                      <small>
-                          Added {{ product.created_at|date:"d M Y" }}
-                      </small>
-                  </div>
-          
-                  <div class="product-price">
-                      Rs. {{ product.unit_price|floatformat:2 }}
-                  </div>
-          
-                  <div class="product-actions">
-                      <a href="{% url 'edit_product' product.pk %}"
-                         class="btn btn-warning btn-sm">
-                          ✏️ Edit
-                      </a>
-          
-                      <form method="post"
-                            action="{% url 'delete_product' product.pk %}"
-                            onsubmit="return confirm('Delete this product?')">
-                          {% csrf_token %}
-                          <button type="submit"
-                                  class="btn btn-danger btn-sm">
-                              🗑 Delete
-                          </button>
-                      </form>
-                  </div>
-          
+                </div>
+                
+                    
+         <div class="grid-item-1">
+          <div class="content-grid row-2">
+            <div class="grid-item-1">
+              <div class="product-actions">
+                <button>
+                  <a href="{% url 'edit_product' product.pk %}"
+                     class="btn btn-warning btn-sm">
+                      ✏️ Edit
+                  </a>
+                </button>
+              </div>
+
+                </div>   
+                <div class="grid-item-1">
+
+
+                  <form method="post"
+                  action="{% url 'delete_product' product.pk %}"
+                  onsubmit="return confirm('Delete this product?')">
+                {% csrf_token %}
+                <button type="submit"
+                        class="btn btn-danger btn-sm">
+                    🗑 Delete
+                </button>
+            </form>
+
+
+                </div>   
+              
+              
+              </div>
+                
+              </div> 
+    
               </div>
               {% endfor %}
-          </div>
-            </div>
+        
+            
             {% else %}
 
-         </div>
-         <div class="grid-item-1">
-   
-
-         </div>
-   </div> 
+      
    <div class="content-grid row-6">
     <div class="grid-item-1">
       

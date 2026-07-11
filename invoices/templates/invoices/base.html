@@ -48,18 +48,18 @@
       <!-- Menu -->
       <div class="nav-links" id="navMenu">
   
-          <a href="{% url 'dashboard' %}" class="btn-new">Dashboard</a> 
+          <a href="{% url 'dashboard' %}">Dashboard</a> 
          
   
-          <a href="{% url 'products' %}"  class="btn-new"> Products </a>
+          <a href="{% url 'products' %}"> Products </a>
              
           
   
-          <a href="{% url 'monthly_report' %}"  class="btn-new"> Reports</a>
+          <a href="{% url 'monthly_report' %}"> Reports</a>
   
-          <a href="{% url 'create_invoice' %}" class="btn-new">Invoice</a>
+          <a href="{% url 'create_invoice' %}">Invoice</a>
           
-          <a href="{% url 'upload_payment_proof' %}"class="btn-new">Payment Proof </a>
+          <a href="{% url 'upload_payment_proof' %}">Payment Proof </a>
             
           
           <a href="{% url 'profile_settings' %}" class="user-chip">
@@ -85,7 +85,7 @@
       </div>
   
   </nav>
-  
+
   {% endif %}
   
   
@@ -93,7 +93,8 @@
 
   <div class="row-1 content-grid">
     <div class="grid-item-1">
-        <h2>Toggle Dark/Light Mode</h2>
+        <hr>
+     
         <button onclick="myFunction()">🌙 Night Mode</button>
     
            <script>
@@ -129,7 +130,7 @@
           .toggle("show");
   }
   </script>
-
+<hr>
 <footer class="">
    
 <div class="content-grid bg-fotter row-3">
