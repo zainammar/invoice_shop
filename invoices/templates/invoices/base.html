@@ -40,6 +40,16 @@
           </div>
       </a>
   
+      {% if invoice.company_logo %}
+          <img src="{{ invoice.company_logo.url }}"
+               alt="Company Logo"
+               style="max-width: 150px;">
+      {% else %}
+          <!-- <p class="text-muted">
+              Company logo upload nahi kiya gaya.
+          </p> -->
+      {% endif %}
+    
       <!-- Mobile Toggle -->
       <button class="menu-toggle" onclick="toggleMenu()">
           ☰
@@ -144,7 +154,7 @@
          </div>
          <div class="grid-item-1">
    
-            <p class="text-1">&copy; 2026 Tajir Asani. All Rights Reserved.</p>
+            <p class="text-1">&copy; 2026 HisabPro . All Rights Reserved.</p>
          </div>
          <div class="grid-item-1">
             <p class="text-1">
@@ -161,3 +171,21 @@
 
 
 </footer>
+<script>
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+    
+        if (document.body.classList.contains("dark-mode")) {
+            localStorage.setItem("theme", "dark");
+        } else {
+            localStorage.setItem("theme", "light");
+        }
+    }
+    
+    // Page load hone par theme restore kare
+    document.addEventListener("DOMContentLoaded", function () {
+        if (localStorage.getItem("theme") === "dark") {
+            document.body.classList.add("dark-mode");
+        }
+    });
+    </script>
