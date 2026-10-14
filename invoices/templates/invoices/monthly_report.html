@@ -6,7 +6,7 @@
 <style>
   /* ── Layout ── */
   .report-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; }
-  .year-tabs { display:flex; gap:20px; flex-wrap:wrap; }
+  .year-tabs { display:flex;background-color: #f59e0b; color: #ffffff;width:70%; gap:20px; flex-wrap:wrap; padding: 10px;}
   
 
   /* ── Stat Cards ── */
@@ -19,7 +19,7 @@
   .stat-card.rose  { border-top-color:#ef4444; }
   .stat-card .icon { font-size:1.8rem; margin-bottom:0.6rem; }
   .stat-card .label { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); margin-bottom:4px; }
-  .stat-card .value { font-size:1.5rem; font-weight:800; color:var(--primary); line-height:1; }
+  .stat-card .value { font-size:1.5rem; font-weight:800; color:black; line-height:1; }
   .stat-card .sub { font-size:0.78rem; color:var(--muted); margin-top:4px; }
   .stat-card .bg-icon { position:absolute; right:-8px; bottom:-8px; font-size:4rem; opacity:0.06; }
 
@@ -33,8 +33,8 @@
   .main-grid { display:grid; grid-template-columns:1fr 360px; gap:1.2rem; margin-bottom:1.2rem; }
 
   /* ── Chart Card ── */
-  .chart-card { background:white; border-radius:14px; padding:1.4rem; box-shadow:0 1px 8px rgba(0,0,0,0.07); }
-  .chart-title { font-size:0.95rem; font-weight:700; color:var(--primary); margin-bottom:1rem; display:flex; align-items:center; gap:8px; }
+  .chart-card { background:white; width:70%; border-radius:14px; padding:1.4rem; box-shadow:0 1px 8px rgba(0,0,0,0.07); }
+  .chart-title { font-size:0.95rem; font-weight:700; color:black; margin-bottom:1rem; display:flex; align-items:center; gap:8px; }
   .chart-wrap { position:relative; height:240px; }
 
   /* ── Table ── */
@@ -51,15 +51,15 @@
 
   /* ── Side cards ── */
   .side-stack { display:flex; flex-direction:column; gap:1.2rem; }
-  .rank-card { background:white; border-radius:14px; padding:1.3rem; box-shadow:0 1px 8px rgba(0,0,0,0.07); }
-  .rank-title { font-size:0.9rem; font-weight:700; color:var(--primary); margin-bottom:1rem; display:flex; align-items:center; gap:8px; }
+  .rank-card { background:white;width:70%; border-radius:14px; padding:1.3rem; box-shadow:0 1px 8px rgba(0,0,0,0.07); }
+  .rank-title { font-size:0.9rem; font-weight:700; color:orange; margin-bottom:1rem; display:flex; align-items:center; gap:8px; }
   .rank-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f8fafc; }
-  .rank-item:last-child { border-bottom:none; }
-  .rank-num { width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,#4f46e5,#7c3aed); color:white; font-size:0.72rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .rank-item:last-child { border-bottom:none; color: #000;}
+  .rank-num { width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,#4f46e5,#7c3aed); color:rgb(25, 9, 248); font-size:0.72rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .rank-num.gold   { background:linear-gradient(135deg,#f59e0b,#d97706); }
   .rank-num.silver { background:linear-gradient(135deg,#94a3b8,#64748b); }
   .rank-num.bronze { background:linear-gradient(135deg,#b45309,#92400e); }
-  .rank-name { flex:1; font-size:0.85rem; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .rank-name { flex:1; font-size:0.85rem; font-weight:600; color:black;; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .rank-amount { font-size:0.82rem; font-weight:700; color:#4f46e5; white-space:nowrap; }
 
   /* ── Bottom Grid ── */
@@ -70,10 +70,10 @@
   .inv-row:last-child { border-bottom:none; }
   .inv-dot { width:8px; height:8px; border-radius:50%; background:#4f46e5; flex-shrink:0; }
   .inv-num { font-size:0.78rem; font-weight:700; color:#4f46e5; }
-  .inv-cust { font-size:0.85rem; font-weight:600; color:var(--text); flex:1; }
+  .inv-cust { font-size:0.85rem; font-weight:600; color:#4f46e5; flex:1; }
   .inv-date { font-size:0.75rem; color:var(--muted); }
-  .inv-amt { font-size:0.88rem; font-weight:700; color:var(--text); }
-
+  .inv-amt { font-size:0.88rem; font-weight:700; color:black;; }
+ .page-subtitle{width: 70%;}
   /* ── Download btn ── */
   .btn-pdf { background:linear-gradient(135deg,#ef4444,#dc2626); color:white; border:none; }
   .btn-pdf:hover { background:linear-gradient(135deg,#dc2626,#b91c1c); }
@@ -82,6 +82,34 @@
     .stats-grid { grid-template-columns:repeat(2,1fr); }
     .main-grid  { grid-template-columns:1fr; }
     .bottom-grid{ grid-template-columns:1fr; }
+  }
+</style>
+<style>
+  html,
+  body {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      overflow-x: hidden;
+  }
+
+  *,
+  *::before,
+  *::after {
+      box-sizing: border-box;
+  }
+
+  main,
+  .container,
+  .content,
+  .main-content {
+      min-width: 0;
+      max-width: 100%;
+  }
+
+  img,
+  canvas {
+      max-width: 100%;
   }
 </style>
 {% endblock %}
@@ -99,7 +127,7 @@
           {% if company.company_logo %}
           <img src="{{ company_profile.company_logo.url }}" alt="Logo" class="brand-logo-img">
       {% endif %}
-          <p class="page-subtitle">Year <strong>{{ selected_year }}</strong> — full breakdown of your business performance</p>
+          <p class="page-subtitle">Year <strong>{{ selected_year }}</strong> <br>— full breakdown of your business performance</p>
         </div>
 
        </div>
@@ -116,15 +144,14 @@
 
        <div class="grid-item-1">
  
-        <div class="year-tabs">
-          {% for yr in available_years %}
-          <button>
-            <a href="?year={{ yr }}" class="year-tab {% if yr == selected_year %}active{% endif %}">{{ yr }}</a>
-            {% endfor %}
-          </button>
-        
-        </div>
-
+    <div class="year-tabs">
+    {% for yr in available_years %}
+        <a href="?year={{ yr }}"
+           class="year-tab {% if yr == selected_year %}active{% endif %}">
+            {{ yr }}
+        </a>
+    {% endfor %}
+</div>
        </div>
        <div class="grid-item-1">
         
@@ -160,8 +187,8 @@
 <div class="chart-card" style="margin-bottom:1.2rem;padding:1rem 1.4rem;">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
     <div>
-      <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:4px;">This Month</div>
-      <div style="font-size:1.6rem;font-weight:800;color:var(--primary);">Rs. {{ this_month_rev|floatformat:0 }}</div>
+      <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:black;margin-bottom:4px;">This Month</div>
+      <div style="font-size:1.6rem;font-weight:800;color:black;">Rs. {{ this_month_rev|floatformat:0 }}</div>
       {% if growth_pct >= 0 %}
         <span class="growth-badge growth-up">▲ {{ growth_pct|floatformat:1 }}% vs last month</span>
       {% else %}
@@ -260,9 +287,9 @@
         <thead>
           <tr>
             <th>Month</th>
-            <th style="text-align:center;">Invoices</th>
-            <th style="text-align:right;">Revenue</th>
-            <th style="min-width:100px;">Bar</th>
+            <th style="text-align:center;color:black;">Invoices</th>
+            <th style="text-align:right;color:black;">Revenue</th>
+            <th style="min-width:100px;color:black;">Bar</th>
           </tr>
         </thead>
         <tbody id="monthlyTableBody">

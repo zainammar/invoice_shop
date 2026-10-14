@@ -4,9 +4,12 @@ body{
   margin: 0px;
   padding:0px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width:100%;
 }
 
 /* ===== DASHBOARD BACKGROUND ===== */
+
+
 
 .bg-1{
   background: #B6BE9C;
@@ -430,6 +433,74 @@ button:hover{
   font-size:.75rem;
 }
 
+   
+/* =========================
+   MODERN RESPONSIVE NAVBAR
+========================= */
+
+.navbar{
+  background:linear-gradient(
+      135deg,
+      #28587B,
+      #053d65
+  );
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  padding:10px 15px;
+
+  position:sticky;
+  top:0;
+  z-index:999;
+
+  box-shadow:0 4px 15px rgba(0,0,0,.15);
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-decoration:none;
+}
+
+.brand-logo-img,
+.brand-logo-placeholder{
+  width:45px;
+  height:45px;
+  border-radius:10px;
+}
+
+.brand-logo-placeholder{
+  background:#2563eb;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+}
+
+      
+      
+.year-tabs{
+  background:#e47e08;
+  color: #053d65;
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+.company-name{
+  color:white;
+  font-weight:700;
+  font-size:1rem;
+}
+
+.brand-sub{
+  display:block;
+  color:#94a3b8;
+  font-size:.75rem;
+}
+
 .nav-links{
   display:flex;
   align-items:center;
@@ -445,7 +516,8 @@ button:hover{
 }
 
 .nav-links a:hover{
-  background:rgba(255,255,255,.1);
+  background:white;
+  color: #4106a8;
 }
 
 .btn-new{
@@ -500,6 +572,108 @@ button:hover{
   height:35px;
   border-radius:50%;
 }
+
+
+
+/* GRID */
+
+/* Grid Content */
+.content-grid {
+  display: grid;
+  gap: 10px;
+}
+
+
+
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 200px 300px; /* First column 200px, second column 300px */
+
+  
+}
+
+.grid-item-1 {
+  padding:10px;
+  text-align: left;  
+}
+
+.grid-item-2 {
+  padding:10px;
+  text-align: left;  
+}
+
+/* Mobile First - 1 column for all rows */
+.row-1, .row-2, .row-3, .row-4 {
+  display: grid;
+ 
+  
+ 
+}
+
+/* Desktop View */
+@media screen and (min-width: 768px) {
+
+  /* 1 column, 1 row (remains the same) */
+  .row-1 {
+      grid-template-columns: 1fr;
+     
+  }
+
+  /* 2 columns, 1 row */
+  .row-2 {
+      grid-template-columns: 1fr 1fr;
+      
+      
+  }
+
+  /* 3 columns, 1 row */
+  .row-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+     
+  }
+
+  /* 4 columns, 1 row */
+  .row-4 {
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+     
+  }
+
+  /* 5 columns, 1 row */
+  .row-5 {
+    grid-template-columns: 1fr 2fr 1fr 1fr;
+   
+}
+
+    /*6 columns, 1 row */
+    .row-6 {
+      grid-template-columns: 1fr 3fr 1fr;
+     
+  }
+
+      /*6 columns, 1 row */
+      .row-7 {
+        grid-template-columns: 1fr 2fr 2fr 1fr;
+       
+    }
+
+     /*6 columns, 1 row */
+     .row-8 {
+      grid-template-columns: 2fr 2fr;
+     
+  }
+
+
+}
+
+
+.grid-item img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
 
 /* Product */
 
@@ -692,3 +866,5 @@ select option[value=""] { color:#9ca3af; }
   margin: 0;
   font-size: 14px;
 }
+
+
