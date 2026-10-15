@@ -1,191 +1,133 @@
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="stylesheet" href="{% static 'css/styleinvoice.css' %}">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-{% load static %}
-<link rel="stylesheet" href="{% static 'css/styleinvoice.css' %}">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
 <title>{% block title %}Invoice Shop{% endblock %}</title>
-
+<script>
+  /* Apply saved theme before first paint (no flash). Falls back to the device setting. */
+  (function () {
+    try {
+      var t = localStorage.getItem('theme');
+      if (t !== 'dark' && t !== 'light') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="{% static 'css/styleinvoice.css' %}">
 {% block extra_style %}{% endblock %}
 </head>
 <body>
-  {% if user.is_authenticated %}
 
+<!-- Icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 13A9 9 0 1111 3a7 7 0 0010 10z"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a1 1 0 01-1 1H7a1 1 0 01-1-1L5 6"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M4 21h16"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V5a1 1 0 011-1h9a1 1 0 011 1v16M15 9h4a1 1 0 011 1v11M3 21h18M8 8h3M8 12h3M8 16h3"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18h.01"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+</svg>
 
-  <nav class="navbar">
-  
-      <!-- Brand -->
-      <a class="brand" href="{% url 'dashboard' %}">
-          {% if company_profile and company_profile.company_logo %}
-              <img src="{{ company_profile.company_logo.url }}"
-                   alt="Logo"
-                   class="brand-logo-img">
-          {% else %}
-              <div class="brand-logo-placeholder">📄</div>
-          {% endif %}
-  
-          <div class="brand-text">
-              <span class="company-name">
-                  {% if company_profile %}
-                      {{ company_profile.company_name }}
-                  {% else %}
-                      Invoice Shop
-                  {% endif %}
-              </span>
-  
-              <span class="brand-sub">
-                  Invoice Management
-              </span>
-          </div>
-      </a>
-  
-      {% if invoice.company_logo %}
-          <img src="{{ invoice.company_logo.url }}"
-               alt="Company Logo"
-               style="max-width: 150px;">
+{% if user.is_authenticated %}
+{% with u=request.resolver_match.url_name %}
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="{% url 'dashboard' %}">
+      {% if company_profile and company_profile.company_logo %}
+        <img src="{{ company_profile.company_logo.url }}" alt="" class="brand-logo-img">
       {% else %}
-          <!-- <p class="text-muted">
-              Company logo upload nahi kiya gaya.
-          </p> -->
+        <span class="brand-logo-placeholder"><svg class="i"><use href="#i-file"/></svg></span>
       {% endif %}
-    
-      <!-- Mobile Toggle -->
-      <button class="menu-toggle" onclick="toggleMenu()">
-          ☰
+      <span class="brand-text">
+        <span class="company-name">{% if company_profile %}{{ company_profile.company_name }}{% else %}Invoice Shop{% endif %}</span>
+        <span class="brand-sub">Invoice management</span>
+      </span>
+    </a>
+
+    <nav class="nav" aria-label="Main">
+      <a href="{% url 'dashboard' %}" class="{% if u == 'dashboard' or u == 'invoice_detail' or u == 'edit_invoice' or u == 'delete_invoice' %}is-active{% endif %}">Dashboard</a>
+      <a href="{% url 'create_invoice' %}" class="{% if u == 'create_invoice' %}is-active{% endif %}">New invoice</a>
+      <a href="{% url 'products' %}" class="{% if u == 'products' or u == 'edit_product' %}is-active{% endif %}">Products</a>
+      <a href="{% url 'monthly_report' %}" class="{% if u == 'monthly_report' %}is-active{% endif %}">Reports</a>
+      <a href="{% url 'upload_payment_proof' %}" class="{% if u == 'upload_payment_proof' %}is-active{% endif %}">Payment proof</a>
+    </nav>
+
+    <div class="topbar-end">
+      <button type="button" class="icon-btn" id="themeToggle" aria-label="Switch light or dark theme">
+        <svg class="i icon-sun"><use href="#i-sun"/></svg>
+        <svg class="i icon-moon"><use href="#i-moon"/></svg>
       </button>
-  
-      <!-- Menu -->
-      <div class="nav-links" id="navMenu">
-  
-          <a href="{% url 'dashboard' %}">Dashboard</a> 
-         
-  
-          <a href="{% url 'products' %}"> Products </a>
-             
-          
-  
-          <a href="{% url 'monthly_report' %}"> Reports</a>
-  
-          <a href="{% url 'create_invoice' %}">Invoice</a>
-          
-          <a href="{% url 'upload_payment_proof' %}">Payment Proof </a>
-            
-          
-          <a href="{% url 'profile_settings' %}" class="user-chip">
-  
-              {% if company_profile and company_profile.user_avatar %}
-                  <img src="{{ company_profile.user_avatar.url }}"
-                       class="user-avatar-img">
-              {% else %}
-                  <div class="user-avatar-placeholder">
-                      {{ user.username|first }}
-                  </div>
-              {% endif %}
-  
-              <span class="user-chip-name">
-                  {{ user.username }}
-              </span>
-          </a>
-  
-          <a href="{% url 'logout' %}" class="btn btn-danger btn-sm">
-              Logout
-          </a>
-  
-      </div>
-  
-  </nav>
-
-  {% endif %}
-  
-  
-
-
-  <div class="row-1 content-grid">
-    <div class="grid-item-1">
-        <hr>
-     
-        <button onclick="myFunction()">🌙 Night Mode</button>
-    
-           <script>
-           function myFunction() {
-              var element = document.body;
-              element.classList.toggle("dark-mode");
-           }
-           </script>
-           
+      <a href="{% url 'profile_settings' %}" class="user-chip" aria-label="Profile settings">
+        {% if company_profile and company_profile.user_avatar %}
+          <img src="{{ company_profile.user_avatar.url }}" alt="" class="user-avatar-img">
+        {% else %}
+          <span class="user-avatar-placeholder">{{ user.username|first }}</span>
+        {% endif %}
+        <span class="user-chip-name">{{ user.username }}</span>
+      </a>
+      <a href="{% url 'logout' %}" class="btn btn-outline btn-sm" aria-label="Log out"><svg class="i"><use href="#i-logout"/></svg><span class="sr-only-mobile">Log out</span></a>
     </div>
-
-    
- <div class="grid-item-1">
-  <div class="{% if user.is_authenticated %}container{% endif %}">
-    {% if messages %}
-    <div class="messages">
-      {% for msg in messages %}
-      <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
-      {% endfor %}
-    </div>   </div>
-    {% endif %}
-    {% block content %}{% endblock %}
   </div>
-  
+</header>
 
-       </div>
+<nav class="tabbar" aria-label="Main">
+  <a href="{% url 'dashboard' %}" class="{% if u == 'dashboard' or u == 'invoice_detail' or u == 'edit_invoice' or u == 'delete_invoice' %}is-active{% endif %}"><svg class="i"><use href="#i-home"/></svg>Home</a>
+  <a href="{% url 'products' %}" class="{% if u == 'products' or u == 'edit_product' %}is-active{% endif %}"><svg class="i"><use href="#i-box"/></svg>Products</a>
+  <a href="{% url 'create_invoice' %}" class="tab-new {% if u == 'create_invoice' %}is-active{% endif %}"><span class="tab-plus"><svg class="i"><use href="#i-plus"/></svg></span>New</a>
+  <a href="{% url 'monthly_report' %}" class="{% if u == 'monthly_report' %}is-active{% endif %}"><svg class="i"><use href="#i-chart"/></svg>Reports</a>
+  <a href="{% url 'profile_settings' %}" class="{% if u == 'profile_settings' or u == 'upload_payment_proof' %}is-active{% endif %}"><svg class="i"><use href="#i-user"/></svg>Account</a>
+</nav>
+{% endwith %}
+{% endif %}
 
- <script>
-  function toggleMenu(){
-      document
-          .getElementById("navMenu")
-          .classList
-          .toggle("show");
-  }
-  </script>
-<hr>
-<footer class="">
-   
-<div class="content-grid bg-fotter row-3">
-    <div class="grid-item-1">
-   
-        <p class="text-1">
-            Sales & Technical Support : 03447092215
-            <br>
-            
-        </p>
-         </div>
-         <div class="grid-item-1">
-   
-            <p class="text-1">&copy; 2026 HisabPro . All Rights Reserved.</p>
-         </div>
-         <div class="grid-item-1">
-            <p class="text-1">
-            How its work
-       
-        </p>
-        
-            <a href="https://youtube.com/@yourchannel" target="_blank">
-                YouTube Channel
-            </a>
-    
-         </div>
-   </div>
+<main class="shell {% block main_class %}{% endblock %}">
+  {% if messages %}
+  <div class="messages" role="status">
+    {% for msg in messages %}<div class="alert alert-{{ msg.tags }}">{{ msg }}</div>{% endfor %}
+  </div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
 
-
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <span>Sales &amp; technical support: <a href="tel:03447092215">0344 7092215</a></span>
+    <span>&copy; 2026 Invoice Shop. All rights reserved.</span>
+    <a href="https://youtube.com/@yourchannel" target="_blank" rel="noopener">How it works (YouTube)</a>
+  </div>
 </footer>
+
 <script>
-    function toggleDarkMode() {
-        document.body.classList.toggle("dark-mode");
-    
-        if (document.body.classList.contains("dark-mode")) {
-            localStorage.setItem("theme", "dark");
-        } else {
-            localStorage.setItem("theme", "light");
-        }
-    }
-    
-    // Page load hone par theme restore kare
-    document.addEventListener("DOMContentLoaded", function () {
-        if (localStorage.getItem("theme") === "dark") {
-            document.body.classList.add("dark-mode");
-        }
+  (function () {
+    var btn = document.getElementById('themeToggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('theme', next); } catch (e) {}
+      document.dispatchEvent(new CustomEvent('themechange', { detail: next }));
     });
-    </script>
+  })();
+</script>
+{% block extra_script %}{% endblock %}
+</body>
+</html>

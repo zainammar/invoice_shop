@@ -1,79 +1,28 @@
 {% extends 'invoices/base.html' %}
 {% block title %}Login — Invoice Shop{% endblock %}
+{% block main_class %}shell--narrow{% endblock %}
 {% block content %}
-{% load static %}
-<link rel="stylesheet" href="{% static 'css/styleinvoice.css' %}">
-<!-- 
-
-<div class="content-grid bg-2 row-3">
-  <div class="grid-item-1">
- 
-
-       </div>
- <div class="grid-item-1">
- 
-
-       </div>
-
-       <div class="grid-item-1">
- 
-
-       </div>
- </div> 
- 
- -->
- <div class="content-grid bg-2 row-1">
-  <div class="grid-item-1 heading-1">
- 
-    <h1>Invoice<span>Shop</span></h1>
-    <p>Professional Invoice Management</p>
-
-       </div>
-
- </div> 
- <div class="content-grid  row-2">
-  <div class="grid-item-1">
- 
-
-       </div>
- <div class="grid-item-1">
- 
-
-  {% if messages %}
-      {% for msg in messages %}
-      <div class="alert alert-error">{{ msg }}</div>
-      {% endfor %}
-    {% endif %}
-    <p class="auth-title">Sign in to your account</p>
+<div class="auth">
+  <div class="auth-brand">
+    <span class="mark"><svg class="i"><use href="#i-file"/></svg></span>
+    <h1>Invoice Shop</h1>
+    <p>Professional invoice management</p>
+  </div>
+  <div class="card">
+    <h2 class="auth-title">Sign in to your account</h2>
     <form method="post">
       {% csrf_token %}
       <div class="form-group">
-        <label>Username</label> <br>
-        <input type="text" name="username" class="form-control" placeholder="Enter username" required autofocus>
+        <label for="username">Username</label>
+        <input id="username" type="text" name="username" class="form-control" placeholder="Enter username" autocomplete="username" required autofocus>
       </div>
       <div class="form-group">
-        <label>Password</label> <br>
-        <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" class="form-control" placeholder="Enter password" autocomplete="current-password" required>
       </div>
-      <br>
-      <button type="submit" class="button2">Login →</button>
+      <button type="submit" class="btn btn-primary btn-block">Log in</button>
     </form>
-    <br>
-    <div class="auth-link">
-      Don't have an account? 
-      </div>
-      <button>
-        <a href="{% url 'register' %}">Register here</a>
-    </button>
-    
-  
   </div>
-  </div>
+  <p class="auth-foot">Don't have an account? <a href="{% url 'register' %}">Request access</a></p>
 </div>
 {% endblock %}
-
-
-
-
-
-

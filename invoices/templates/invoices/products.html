@@ -1,246 +1,71 @@
 {% extends 'invoices/base.html' %}
 {% block title %}My Products — Invoice Shop{% endblock %}
-{% block extra_style %}
-<style>
-  .product-grid { display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; }
-  .add-card { background: white; border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,0.08); padding: 1.5rem; height: fit-content; position: sticky; top: 80px; }
-  .price-badge { font-weight: 700; color: #4f46e5; font-size: 1rem; }
-  .empty-state { text-align: center; padding: 3rem 1rem; }
-  .tip-box { background: linear-gradient(135deg,#eff6ff,#e0e7ff); border: 1px solid #bfdbfe; border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-size: 0.88rem; color: #1e40af; }
-  .product-count { background: var(--accent);  color: #4f46e5; border-radius: 20px; padding: 2px 10px; font-size: 0.78rem; font-weight: 700; margin-left: 8px; }
-</style>
-{% endblock %}
+
 {% block content %}
-
-<br>
-<div class="content-grid row-6">
-  <div class="grid-item-1">
-    
-
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Product catalog</h1>
+    <p class="page-subtitle">Add your products once, then pick them in every invoice.</p>
   </div>
+  <a href="{% url 'dashboard' %}" class="btn btn-outline"><svg class="i"><use href="#i-back"/></svg>Dashboard</a>
+</header>
 
-  <div class="grid-item-1 bg-4">
+<div class="notice">
+  <svg class="i"><use href="#i-info"/></svg>
+  <div><strong>Tip:</strong> Yahan apne products ek baar add karein (name + price). Invoice banate waqt sirf dropdown se select karein, price khud fill ho jayega.</div>
+</div>
 
-   
-      <div>
-        <h1 class="page-title">📦 My Product Catalog</h1>
-        <p class="page-subtitle">Add your products once — use them in every invoice</p>
+<div class="product-layout">
+  <section class="card add-card" aria-labelledby="add-title">
+    <h2 class="card-title" id="add-title">Add new product</h2>
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="product_name">Product / service name</label>
+        <input id="product_name" type="text" name="product_name" class="form-control" placeholder="e.g. Cotton fabric (per meter)" required autofocus>
       </div>
-      <a href="{% url 'dashboard' %}" class="btn btn-outline">← Dashboard</a>
-  
+      <div class="form-group">
+        <label for="unit_price">Unit price (Rs.)</label>
+        <input id="unit_price" type="number" name="unit_price" class="form-control" placeholder="e.g. 5000" min="0" step="0.01" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Save product</button>
+    </form>
+  </section>
+
+  <section aria-labelledby="saved-title">
+    <div class="list-head" style="margin-top:0">
+      <h2 id="saved-title">Saved products <span class="badge">{{ products.count }}</span></h2>
     </div>
-    <div class="grid-item-1">
-    
 
-    </div>
-
-  </div>
-
-<!--    
-  <div class="content-grid row-6">
-    <div class="grid-item-1">
-   
-
-         </div>
-         <div class="grid-item-1">
-   
-
-         </div>
-         <div class="grid-item-1">
-   
-
-         </div>
-   </div> 
-   
-   
-   -->
-   <div class="content-grid row-6">
-    <div class="grid-item-1">
-   
-
-         </div>
-         <div class="grid-item-1">
-   
-         <p class="text-1">
-          💡 <strong>Tip:</strong> Yahan apne products ek baar add karein (name + price). Invoice banate waqt sirf dropdown se select karein — price automatically fill ho jayega!
-         </p> 
-         </div>
-         <div class="grid-item-1">
-   
-
-         </div>
-   </div> 
-   
-   <div class="content-grid row-6">
-    <div class="grid-item-1">
-   
-
-    </div>
-    <div class="grid-item-1">
-      <div class="add-card">
-
-        <h3 style="font-size:1.05rem;font-weight:700;color:#1a1a2e;margin-bottom:1.2rem;display:flex;align-items:center;gap:8px;">
-            ➕ Add New Product
-        </h3>
-    
-        <form method="post">
+    {% if products %}
+    <ul class="product-list">
+      {% for product in products %}
+      <li>
+        <div>
+          <span class="product-name">{{ product.product_name }}</span>
+          <span class="product-added">Added {{ product.created_at|date:"d M Y" }}</span>
+        </div>
+        <span class="product-price">Rs. {{ product.unit_price|floatformat:"2g" }}</span>
+        <div class="product-actions">
+          <a href="{% url 'edit_product' product.pk %}" class="btn btn-warning btn-sm"><svg class="i"><use href="#i-edit"/></svg>Edit</a>
+          <form method="post" action="{% url 'delete_product' product.pk %}" onsubmit="return confirm('Delete this product?')">
             {% csrf_token %}
-    
-            <div class="form-row">
-    
-                <div class="form-group">
-                    <label>Product / Service Name *</label>
-                    <input
-                        type="text"
-                        name="product_name"
-                        class="form-control"
-                        placeholder="Product Name"
-                        required
-                        autofocus>
-                </div>
-    
-                <div class="form-group">
-                    <label>Unit Price (Rs.) *</label>
-                    <input
-                        type="number"
-                        name="unit_price"
-                        class="form-control"
-                        placeholder="e.g. 5000"
-                        min="0"
-                        step="0.01"
-                        required>
-                </div>
-    
-            </div>
-    
-            <button
-                type="submit"
-                class="btn btn-primary"
-                style="width:100%;justify-content:center;">
-                💾 Save Product
-            </button>
-    
-        </form>
-    
+            <button type="submit" class="btn btn-danger btn-sm"><svg class="i"><use href="#i-trash"/></svg>Delete</button>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    <div style="margin-top:20px">
+      <a href="{% url 'create_invoice' %}" class="btn btn-primary">Create invoice with these products</a>
     </div>
-
-         </div>
-         
-         <div class="grid-item-1">
-   
-          <h3>
-            Saved Products
-            <span class="product-count">{{ products.count }}</span>
-          </h3>
-
-         </div>
-
-        </div>
-        <div class="content-grid row-3">
-        
-         <div class="grid-item-1">
-          <div class="card bg-1">
-
-            {% if products %}
-            <div class="products-grid">
-              {% for product in products %}
-       
-              <div class="product-id">
-                #{{ forloop.counter }}
-            </div>
-            </div>
-          </div>
-          <div class="product-info">
-            <h4>{{ product.product_name }}</h4>
-            <small>
-                Added {{ product.created_at|date:"d M Y" }}
-            </small>
-        </div>
-        <div class="product-price">
-          Rs. {{ product.unit_price|floatformat:2 }}
-      </div>
-      <div class="content-grid row-2">
-        <div class="grid-item-1">
-          <div class="product-actions">
-            <button>
-              <a href="{% url 'edit_product' product.pk %}"
-                 class="btn btn-warning btn-sm">
-                  ✏️ Edit
-              </a>
-            </button>
-          </div>
-
-            </div>   
-            <div class="grid-item-1">
-
-
-              <form method="post"
-              action="{% url 'delete_product' product.pk %}"
-              onsubmit="return confirm('Delete this product?')">
-            {% csrf_token %}
-            <button type="submit"
-                    class="btn btn-danger btn-sm">
-                🗑 Delete
-            </button>
-        </form>
-
-
-            </div>   
-            <div class="grid-item-1">
-            </div>
-          
-          </div>
-        </div>
-                
-                
-      
-                    
-         <div class="grid-item-1">
-          
-                
-              </div> 
-    
-              </div>
-              {% endfor %}
-        
-            
-            {% else %}
-
-      
-   <div class="content-grid row-6">
-    <div class="grid-item-1">
-      
-  
+    {% else %}
+    <div class="empty">
+      <svg class="i"><use href="#i-box"/></svg>
+      <h3>No products yet</h3>
+      <p>Add your first product using the form.</p>
     </div>
-    <div class="grid-item-1">
-      <div class="product-grid">
-
-        <!-- ADD FORM -->
-      
-      
-        <!-- PRODUCT LIST -->
-        
-          <div class="empty-state">
-            <div style="font-size:3.5rem;margin-bottom:0.8rem;">📦</div>
-            <h4 style="color:#fefefe;margin-bottom:0.4rem;">No products yet</h4>
-            <p style="color:#f4f4f4;font-size:0.9rem;">Add your first product using the form on the left</p>
-          </div>
-          {% endif %}
-      
-          {% if products %}
-          <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #f1f5f9;text-align:center;">
-            <button>
-              <a href="{% url 'create_invoice' %}" class="btn btn-primary">Create Invoice with These Products →</a>
-            </button>
-          
-          </div>
-          {% endif %}
-        </div>
-      
-      </div>
-  
-    </div>
-
-
-
+    {% endif %}
+  </section>
+</div>
 {% endblock %}

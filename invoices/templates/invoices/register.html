@@ -1,42 +1,21 @@
 {% extends 'invoices/base.html' %}
-{% block title %}Register — Invoice Shop{% endblock %}
+{% block title %}Request access — Invoice Shop{% endblock %}
+{% block main_class %}shell--narrow{% endblock %}
 {% block content %}
-{% load static %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-<div class="content-grid bg-2 row-1">
-  <div class="grid-item-1 heading-1">
-    
-    <h1>Tajir <span>Asani</span></h1>
-    <p>Professional Invoice Management</p>
-
-       </div>
-
- </div> 
-<div class="content-grid bg-2 row-2">
-  <div class="grid-item-1">
- 
-
-       </div>
- <div class="grid-item-1">
- 
-  <p class="auth-title">Account Request</p>
-
-  <div class="info">
-    New accounts can only be created by the administrator.
-    Please contact the administrator to obtain login credentials.
-    <br>   <br>
-    Contact: 03447092215
+<div class="auth">
+  <div class="auth-brand">
+    <span class="mark"><svg class="i"><use href="#i-file"/></svg></span>
+    <h1>Invoice Shop</h1>
+    <p>Professional invoice management</p>
   </div>
-
-  <div class="auth-link">
-    <a href="{% url 'login' %}">
-    <button type="submit" class="button2">Login →</button></a>
+  <div class="card">
+    <h2 class="auth-title">Account request</h2>
+    <div class="notice">
+      <svg class="i"><use href="#i-info"/></svg>
+      <div>New accounts can only be created by the administrator. Please contact the administrator to get your login details.
+        <br><strong>Contact: <a href="tel:03447092215">0344 7092215</a></strong></div>
+    </div>
+    <a href="{% url 'login' %}" class="btn btn-primary btn-block">Go to login</a>
   </div>
 </div>
-</div>
-    
-      
-
- 
-
 {% endblock %}

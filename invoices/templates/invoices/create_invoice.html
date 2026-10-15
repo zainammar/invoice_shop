@@ -1,186 +1,97 @@
 {% extends 'invoices/base.html' %}
-{% block title %}Invoice{% endblock %}
-{% block extra_style %}
+{% load static %}
+{% block title %}New Invoice — Invoice Shop{% endblock %}
 
-{% endblock %}
 {% block content %}
-
-<div class="page-header">
+<header class="page-head">
   <div>
-    <h1 class="page-title">+ Create New Invoice</h1>
-    <p class="page-subtitle">Select products from your catalog and fill in customer details</p>
+    <h1 class="page-title">New invoice</h1>
+    <p class="page-subtitle">Pick products from your catalog and add the customer details.</p>
   </div>
-  <a href="{% url 'dashboard' %}" class="btn btn-outline">← Back</a>
-</div>
+  <a href="{% url 'dashboard' %}" class="btn btn-outline"><svg class="i"><use href="#i-back"/></svg>Back</a>
+</header>
 
 {% if not products %}
-<div class="no-products-warn">
-  ⚠️ <strong>No products in your catalog!</strong>
-  <a href="{% url 'products' %}" style="color:#92400e;font-weight:700;">Add products first →</a>
-  — phir invoice mein dropdown se select karein.
+<div class="notice notice--warn">
+  <svg class="i"><use href="#i-alert"/></svg>
+  <div><strong>No products in your catalog.</strong> <a href="{% url 'products' %}">Add products first</a>, phir invoice mein dropdown se select karein. You can also type a product name by hand below.</div>
 </div>
 {% endif %}
 
-<form method="post" id="invoiceForm">
+<form method="post" id="invoiceForm" data-products="{{ products_json }}">
   {% csrf_token %}
+  <div class="invoice-layout">
+    <div class="stack">
+      <section class="card">
+        <h2 class="card-title">Customer</h2>
+        <div class="form-group">
+          <label for="customer_name">Customer name *</label>
+          <input id="customer_name" type="text" name="customer_name" class="form-control" placeholder="e.g. Ahmed Ali" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="customer_email">Email</label>
+            <input id="customer_email" type="email" name="customer_email" class="form-control" placeholder="customer@email.com">
+          </div>
+          <div class="form-group">
+            <label for="customer_address">Address</label>
+            <textarea id="customer_address" name="customer_address" class="form-control" rows="1" placeholder="Customer address"></textarea>
+          </div>
+        </div>
+      </section>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.5rem;">
-    <div class="card">
-      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:#1a1a2e;border-bottom:2px solid #f1f5f9;padding-bottom:0.5rem;">👤 Customer Info</h3>
-      <div class="form-group">
-        <label>Customer Name *</label>
-        <input type="text" name="customer_name" class="form-control" placeholder="e.g. Ahmed Ali" required>
-      </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" name="customer_email" class="form-control" placeholder="customer@email.com">
-      </div>
-      <div class="form-group" style="margin-bottom:0;">
-        <label>Address</label>
-        <textarea name="customer_address" class="form-control" rows="3" placeholder="Customer address..."></textarea>
-      </div>
+      <section class="card">
+        <h2 class="card-title">Items</h2>
+        <div class="table-wrap">
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="width:44px">#</th>
+                <th>Product</th>
+                <th style="width:84px">Qty</th>
+                <th style="width:120px">Unit price (Rs.)</th>
+                <th style="width:120px">Amount (Rs.)</th>
+                <th style="width:44px"><span class="sr-only">Remove</span></th>
+              </tr>
+            </thead>
+            <tbody id="itemsBody">
+              <tr class="item-row">
+                <td class="sr-cell">1</td>
+                <td class="cell-product" data-label="Product">
+                  <input type="hidden" name="product_id[]" class="pid" value="">
+                  <select class="prod-select" aria-label="Select product">
+                    <option value="">Select a product</option>
+                    {% for p in products %}
+                    <option value="{{ p.id }}">{{ p.product_name }} (Rs. {{ p.unit_price }})</option>
+                    {% endfor %}
+                  </select>
+                  <input type="text" name="product_name[]" class="pname" placeholder="Or type a name" required>
+                </td>
+                <td data-label="Qty"><input type="number" name="quantity[]" class="qty" value="1" min="1" required></td>
+                <td data-label="Unit price (Rs.)"><input type="number" name="unit_price[]" class="price" step="0.01" min="0" placeholder="0.00" required></td>
+                <td class="cell-amount" data-label="Amount (Rs.)"><input type="text" class="amount" readonly tabindex="-1" placeholder="0.00"></td>
+                <td class="cell-remove"><button type="button" class="remove-btn" aria-label="Remove row"><svg class="i"><use href="#i-x"/></svg></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="items-footer">
+          <button type="button" id="addRowBtn" class="btn btn-outline btn-sm"><svg class="i"><use href="#i-plus"/></svg>Add row</button>
+        </div>
+      </section>
     </div>
-    <div class="card" style="display:flex;flex-direction:column;justify-content:center;align-items:center;background:linear-gradient(135deg,#1a1a2e,#0f3460);color:white;gap:0.5rem;">
-      <div style="font-size:3.5rem;">📄</div>
-      <div style="font-size:1.1rem;font-weight:700;">New Invoice</div>
-      <div style="opacity:0.5;font-size:0.8rem;" id="invoiceDateDisplay"></div>
-      <div style="margin-top:0.8rem;background:rgba(255,255,255,0.1);border-radius:8px;padding:0.6rem 1rem;font-size:0.82rem;text-align:center;">
-        📦 {{ products.count }} product{{ products.count|pluralize }} in catalog
-      </div>
-    </div>
-  </div>
 
-  <div class="card">
-    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1rem;color:#1a1a2e;border-bottom:2px solid #f1f5f9;padding-bottom:0.5rem;">📦 Invoice Items</h3>
-    <div style="overflow-x:auto;">
-      <table class="items-table">
-        <thead>
-          <tr>
-            <th style="width:44px;">SR#</th>
-            <th>Select Product</th>
-            <th style="width:95px;">Qty</th>
-            <th style="width:130px;">Unit Price (Rs.)</th>
-            <th style="width:130px;">Amount (Rs.)</th>
-            <th style="width:48px;"></th>
-          </tr>
-        </thead>
-        <tbody id="itemsBody">
-          <tr>
-            <td class="sr-cell">1</td>
-            <td>
-              <input type="hidden" name="product_id[]" class="pid" value="">
-              <select class="prod-select" onchange="onProductSelect(this)">
-                <option value="">— Select product —</option>
-                {% for p in products %}
-                <option value="{{ p.id }}" data-price="{{ p.unit_price }}" data-name="{{ p.product_name|escapejs }}">
-                  {{ p.product_name }} — Rs. {{ p.unit_price }}
-                </option>
-                {% endfor %}
-              </select>
-              <input type="text" name="product_name[]" class="pname" placeholder="Or type product name" style="margin-top:4px;" required>
-            </td>
-            <td><input type="number" name="quantity[]" class="qty" value="1" min="1" required></td>
-            <td><input type="number" name="unit_price[]" class="price" step="0.01" min="0" placeholder="0.00" required></td>
-            <td><input type="text" class="amount" readonly placeholder="0.00" style="background:#f8fafc;font-weight:700;color:#4f46e5;"></td>
-            <td><button type="button" class="remove-btn" onclick="removeRow(this)">✕</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <button type="button" onclick="addRow()" class="btn btn-outline" style="margin-top:1rem;">+ Add Row</button>
-    <div class="total-bar">
-      <span style="opacity:0.7;">GRAND TOTAL</span>
-      <span id="grandTotal" style="font-size:1.6rem;font-weight:800;color:#818cf8;">Rs. 0.00</span>
-    </div>
-  </div>
-
-  <div style="display:flex;justify-content:flex-end;gap:1rem;margin-top:1.5rem;">
-    <a href="{% url 'dashboard' %}" class="btn btn-outline">Cancel</a>
-    <button type="submit" class="btn btn-primary" style="font-size:1rem;padding:12px 28px;">💾 Save Invoice</button>
+    <aside class="card invoice-aside" aria-label="Invoice summary">
+      <h2 class="card-title">Summary</h2>
+      <div class="aside-line"><span>Date</span><strong id="invoiceDateDisplay"></strong></div>
+      <div class="aside-line"><span>Items</span><strong id="itemCount">1</strong></div>
+      <div class="aside-line"><span>Products in catalog</span><strong>{{ products.count }}</strong></div>
+      <div class="aside-total"><span>Grand total</span><span class="total-value" id="grandTotal">Rs. 0.00</span></div>
+      <button type="submit" class="btn btn-primary btn-block">Save invoice</button>
+      <a href="{% url 'dashboard' %}" class="btn btn-outline btn-block" style="margin-top:8px">Cancel</a>
+    </aside>
   </div>
 </form>
-
-<script>
-(function() {
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const d = new Date();
-  document.getElementById('invoiceDateDisplay').textContent =
-    d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
-})();
-
-// Safe JSON — no trailing commas, no Decimal type, no quote-breaking
-const productMap = JSON.parse("{{ products_json|escapejs }}");
-
-function onProductSelect(sel) {
-  const tr = sel.closest('tr');
-  const pid = sel.value;
-  if (pid && productMap[pid]) {
-    tr.querySelector('.pname').value = productMap[pid].name;
-    tr.querySelector('.price').value = productMap[pid].price.toFixed(2);
-    tr.querySelector('.pid').value = pid;
-  } else {
-    tr.querySelector('.pid').value = '';
-  }
-  calcRow(tr);
-  calcTotal();
-}
-
-function buildOptions() {
-  return '<option value="">— Select product —</option>' +
-    Object.entries(productMap).map(([id, p]) =>
-      `<option value="${id}">${p.name.replace(/</g,'&lt;')} — Rs. ${p.price}</option>`
-    ).join('');
-}
-
-function addRow() {
-  const tbody = document.getElementById('itemsBody');
-  const rowNum = tbody.querySelectorAll('tr').length + 1;
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td class="sr-cell">${rowNum}</td>
-    <td>
-      <input type="hidden" name="product_id[]" class="pid" value="">
-      <select class="prod-select" onchange="onProductSelect(this)">${buildOptions()}</select>
-      <input type="text" name="product_name[]" class="pname" placeholder="Or type product name" style="margin-top:4px;" required>
-    </td>
-    <td><input type="number" name="quantity[]" class="qty" value="1" min="1" required></td>
-    <td><input type="number" name="unit_price[]" class="price" step="0.01" min="0" placeholder="0.00" required></td>
-    <td><input type="text" class="amount" readonly placeholder="0.00" style="background:#f8fafc;font-weight:700;color:#4f46e5;"></td>
-    <td><button type="button" class="remove-btn" onclick="removeRow(this)">✕</button></td>
-  `;
-  tbody.appendChild(tr);
-  attachListeners(tr);
-}
-
-function removeRow(btn) {
-  if (document.querySelectorAll('#itemsBody tr').length > 1) {
-    btn.closest('tr').remove();
-    document.querySelectorAll('#itemsBody tr').forEach((tr, i) => tr.querySelector('.sr-cell').textContent = i + 1);
-    calcTotal();
-  }
-}
-
-function calcRow(tr) {
-  const qty   = parseFloat(tr.querySelector('.qty').value)   || 0;
-  const price = parseFloat(tr.querySelector('.price').value) || 0;
-  tr.querySelector('.amount').value = (qty * price).toFixed(2);
-}
-
-function calcTotal() {
-  let total = 0;
-  document.querySelectorAll('.amount').forEach(el => {
-    total += parseFloat(el.value) || 0;
-  });
-  document.getElementById('grandTotal').textContent =
-    'Rs. ' + total.toLocaleString('en-PK', {minimumFractionDigits:2});
-}
-
-function attachListeners(tr) {
-  tr.querySelector('.qty').addEventListener('input',   () => { calcRow(tr); calcTotal(); });
-  tr.querySelector('.price').addEventListener('input', () => { calcRow(tr); calcTotal(); });
-}
-
-document.querySelectorAll('#itemsBody tr').forEach(tr => attachListeners(tr));
-calcTotal();
-</script>
 {% endblock %}
+
+{% block extra_script %}<script src="{% static 'js/invoice-items.js' %}"></script>{% endblock %}

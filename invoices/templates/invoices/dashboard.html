@@ -1,189 +1,78 @@
 {% extends 'invoices/base.html' %}
-{% load static %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% load l10n %}
 {% block title %}Dashboard — Invoice Shop{% endblock %}
 
 {% block content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-subtitle">Welcome back, {{ user.username }}.</p>
+  </div>
+  <a href="{% url 'create_invoice' %}" class="btn btn-primary"><svg class="i"><use href="#i-plus"/></svg>New invoice</a>
+</header>
 
-<div class="content-grid bg-2 row-3">
-    <div class="grid-item-1">
-     
-         </div>
-         <div class="grid-item-1">
-            <div class="page-header">
-                <div>
-                    <h1>📊 Dashboard</h1>
-                    <p>Welcome {{ user.username }}</p>
-                </div>
-        
-                <a href="{% url 'create_invoice' %}" class="btn btn-primary">
-                    + Create Invoice
-                </a>
-            </div>
-         </div>
-         <div class="grid-item-1">
-     
-         </div>
+<section class="card summary" aria-label="Summary">
+  <div>
+    <p class="summary-label">Total sales{% if selected_month %} for {{ selected_month }}{% endif %}</p>
+    <p class="summary-amount" id="monthly-total">Rs. 0.00</p>
+  </div>
+  <dl class="summary-meta">
+    <div><dt>Invoices</dt><dd>{{ invoices.count }}</dd></div>
+    <div><dt>Products</dt><dd>{{ product_count }}</dd></div>
+    <div><dt>Member since</dt><dd>{{ user.date_joined|date:"M Y" }}</dd></div>
+  </dl>
+</section>
 
-   </div>
-
-
-    <!-- STATS
-     
-      <div class="content-grid bg-2 row-1">
-     <div class="grid-item-1">
-    
-
-          </div>
-
+<div class="list-head">
+  <h2>Invoices</h2>
+  <form method="get" class="filter">
+    <div class="form-group">
+      <label for="month" class="sr-only">Month</label>
+      <input type="month" id="month" name="month" value="{{ selected_month|default:'' }}">
     </div>
-    -->
-    <div class="content-grid bg-2 row-3">
-      <div class="grid-item-1">
-    <div class="dashboard-stats">
-
-        <div class="card stat-card">
-            <div class="stat-number">{{ invoices.count }}</div>
-            <div class="stat-label">Total Invoices</div>
-        </div>
-      </div>
-    </div>
-      <div class="grid-item-1">
-        <div class="card stat-card">
-            <div id="monthly-total" class="stat-number stat-success">
-                Rs. 0.00
-            </div>
-            <div class="stat-label">Total Sales</div>
-        </div>
-      </div>
-      <div class="grid-item-1">
-        <div class="card stat-card">
-            <div class="stat-number stat-warning">
-                {{ user.date_joined|date:"M Y" }}
-            </div>
-            <div class="stat-label">Member Since</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- FILTER -->
-    <div class="content-grid bg-3 row-3">
-        <div class="grid-item-1"> </div>
-
-        <div class="grid-item-1"> 
-    <div class="dashboard-filter">
-
-        <h3>Invoices</h3>
-
-        <form method="GET" class="filter-form">
-
-            <input type="month" name="month" value="{{ request.GET.month }}">
-
-            <button type="submit" class="btn btn-primary btn-sm">
-                Filter
-            </button>
-
-            <a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">
-                Clear
-            </a>
-
-        </form>
-
-    </div>  </div>
-
+    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+    {% if selected_month %}<a href="{% url 'dashboard' %}" class="btn btn-outline btn-sm">Clear</a>{% endif %}
+  </form>
 </div>
 
-    <!-- INVOICES GRID -->
-    {% if invoices %}
-    <div class="invoice-grid row-1 ">
-        <div class="grid-item-1">
-            {% for invoice in invoices %}
-        </div>
-      
-
-    </div>
-    <div class="invoice-grid row-3 ">
-        <div class="grid-item-1">
-
-            <h4>{{ invoice.customer_name }}</h4>
-
-            {% if invoice.customer_email %}
-            <p>{{ invoice.customer_email }}</p>
-            {% endif %}
-
-        </div>
-        <div class="grid-item-1">
-
-            <p>Items: {{ invoice.items.count }}</p>
-
-            <div class="invoice-total invoice-amount">
-                Rs. {{ invoice.total_amount|floatformat:2 }}
-            </div>
-        </div>
-        <div class="grid-item-1">
-            <button>
-            <a href="{% url 'invoice_detail' invoice.pk %}">
-                View
-            </a>
-        </button>
-        </div>
-    </div>
-     
-
-        <div class="card invoice-card">
-
-          
-            <div class="invoice-body">
-
-
-                <div class="invoice-date">
-                 
-                </div>
-
-            </div>
-
-            <div class="actions">
-              
-              
-         
-            </div>
-
-        </div>
-
-        {% endfor %}
-
-    </div>
-    <br>
-    {% else %}
-
-    <div style="text-align:center;padding:3rem;">
-        <h3>No invoices found</h3>
-        <p>Create your first invoice</p>
-    </div>
-
-    {% endif %}
-
+{% if invoices %}
+<ul class="ledger">
+  {% for invoice in invoices %}
+  <li>
+    <a class="ledger-row" href="{% url 'invoice_detail' invoice.pk %}">
+      <span class="ledger-no">{{ invoice.invoice_number }}</span>
+      <span class="ledger-main">
+        <strong>{{ invoice.customer_name }}</strong>
+        <span class="ledger-meta">
+          <span>{{ invoice.created_at|date:"d M Y" }}</span>
+          <span>{{ invoice.items.count }} item{{ invoice.items.count|pluralize }}</span>
+        </span>
+      </span>
+      <span class="ledger-amount" data-amount="{{ invoice.total_amount|unlocalize }}">Rs. {{ invoice.total_amount|floatformat:"2g" }}</span>
+      <svg class="i"><use href="#i-chevron"/></svg>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="empty">
+  <svg class="i"><use href="#i-file"/></svg>
+  <h3>{% if selected_month %}No invoices in this month{% else %}No invoices yet{% endif %}</h3>
+  <p>{% if selected_month %}Try another month, or clear the filter.{% else %}Create your first invoice to see it here.{% endif %}</p>
+  <a href="{% url 'create_invoice' %}" class="btn btn-primary"><svg class="i"><use href="#i-plus"/></svg>New invoice</a>
 </div>
+{% endif %}
+{% endblock %}
 
-<!-- JS TOTAL CALC -->
+{% block extra_script %}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-
-    let total = 0;
-
-    document.querySelectorAll('.invoice-amount').forEach(el => {
-        let amount = el.innerText
-            .replace('Rs.', '')
-            .replace(/,/g, '')
-            .trim();
-
-        total += parseFloat(amount) || 0;
+  document.addEventListener('DOMContentLoaded', function () {
+    var total = 0;
+    document.querySelectorAll('[data-amount]').forEach(function (el) {
+      total += parseFloat(el.dataset.amount) || 0;
     });
-
-    document.getElementById('monthly-total').innerText =
-        'Rs. ' + total.toFixed(2);
-
-});
+    document.getElementById('monthly-total').textContent =
+      'Rs. ' + total.toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  });
 </script>
-
 {% endblock %}

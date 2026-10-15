@@ -1,94 +1,88 @@
 {% extends 'invoices/base.html' %}
-{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
-{% block extra_style %}
-<style>
-  .inv-header { background:linear-gradient(135deg,#1a1a2e,#0f3460); color:white; border-radius:12px; padding:2rem; margin-bottom:1.5rem; display:flex; justify-content:space-between; align-items:center; }
-  .inv-title { font-size:2rem; font-weight:800; letter-spacing:2px; }
-  .inv-number { font-size:0.9rem; opacity:0.6; margin-top:4px; }
-  .inv-date { text-align:right; }
-  .inv-date .label { font-size:0.8rem; opacity:0.6; }
-  .inv-date .val { font-size:1.1rem; font-weight:700; }
-  .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem; }
-  .info-card { background:white; border-radius:10px; padding:1.2rem; border:1px solid #e2e8f0; }
-  .info-card .label { font-size:0.78rem; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
-  .info-card .value { font-size:1rem; font-weight:600; color:#1e293b; }
-  .total-section { background:linear-gradient(135deg,#4f46e5,#7c3aed); color:white; border-radius:10px; padding:1.5rem; display:flex; justify-content:space-between; align-items:center; margin-top:1rem; }
-</style>
-{% endblock %}
+{% block title %}Invoice {{ invoice.invoice_number }} — Invoice Shop{% endblock %}
+
 {% block content %}
-<div class="page-header">
+<header class="page-head">
   <div>
-    <h1 class="page-title">Invoice Details</h1>
-    <p class="page-subtitle">Viewing invoice {{ invoice.invoice_number }}</p>
+    <h1 class="page-title">Invoice details</h1>
+    <p class="page-subtitle">Viewing {{ invoice.invoice_number }}</p>
   </div>
   <div class="actions">
-    <a href="{% url 'edit_invoice' invoice.pk %}" class="btn btn-warning">✏️ Edit</a>
-    <a href="{% url 'download_pdf' invoice.pk %}" class="btn btn-success">📥 Download PDF</a>
-    <a href="{% url 'delete_invoice' invoice.pk %}" class="btn btn-danger">🗑 Delete</a>
-    <a href="{% url 'dashboard' %}" class="btn btn-outline">← Back</a>
+    <a href="{% url 'edit_invoice' invoice.pk %}" class="btn btn-warning"><svg class="i"><use href="#i-edit"/></svg>Edit</a>
+    <a href="{% url 'download_pdf' invoice.pk %}" class="btn btn-success"><svg class="i"><use href="#i-download"/></svg>Download PDF</a>
+    <a href="{% url 'delete_invoice' invoice.pk %}" class="btn btn-danger"><svg class="i"><use href="#i-trash"/></svg>Delete</a>
+    <a href="{% url 'dashboard' %}" class="btn btn-outline"><svg class="i"><use href="#i-back"/></svg>Back</a>
   </div>
-</div>
-<br>
-<div class="inv-header">
-  <div>
-    <div class="inv-title">INVOICE</div>
-    <div class="inv-number"># {{ invoice.invoice_number }}</div>
-    {% if company_profile and company_profile.company_logo %}
-    <img src="{{ company_profile.company_logo.url }}" alt="Logo" class="brand-logo-img">
-{% else %}
-    <h2>{{ request.user.username }}</h2>
-{% endif %}
-  </div>
-  <div class="inv-date">
-    <div class="label">DATE ISSUED</div>
-    <div class="val">{{ invoice.created_at|date:"d M Y" }}</div>
-  </div>
-</div>
+</header>
 
-<div class="info-grid">
-  <div class="info-card">
-    <div class="label">👤 Bill To</div>
-    <div class="value">{{ invoice.customer_name }}</div>
-    {% if invoice.customer_email %}<div style="color:#64748b;font-size:0.85rem;margin-top:4px;">{{ invoice.customer_email }}</div>{% endif %}
-    {% if invoice.customer_address %}<div style="color:#64748b;font-size:0.85rem;margin-top:4px;">{{ invoice.customer_address }}</div>{% endif %}
+<article class="bill" aria-label="Invoice {{ invoice.invoice_number }}">
+  <div class="bill-head">
+    <div class="bill-from">
+      {% if company_profile and company_profile.company_logo %}
+        <img src="{{ company_profile.company_logo.url }}" alt="" class="brand-logo-img">
+      {% endif %}
+      <h2>{% if company_profile %}{{ company_profile.company_name }}{% else %}{{ request.user.username }}{% endif %}</h2>
+    </div>
+    <div class="bill-id">
+      <div class="kind">Invoice</div>
+      <div class="number">{{ invoice.invoice_number }}</div>
+      <div class="date">Issued {{ invoice.created_at|date:"d M Y" }}</div>
+    </div>
   </div>
-  <div class="info-card">
-    <div class="label">📦 Summary</div>
-    <div class="value">{{ invoice.items.count }} item(s)</div>
-    <div style="color:#64748b;font-size:0.85rem;margin-top:4px;">Created: {{ invoice.created_at|date:"d M Y H:i" }}</div>
-    {% if invoice.updated_at != invoice.created_at %}<div style="color:#64748b;font-size:0.85rem;">Updated: {{ invoice.updated_at|date:"d M Y H:i" }}</div>{% endif %}
-  </div>
-</div>
 
-<div class="card">
-  <table>
-    <thead>
-      <tr>
-        <th style="width:60px;">SR#</th>
-        <th>Product Name</th>
-        <th style="text-align:center;width:100px;">Quantity</th>
-        <th style="text-align:right;width:130px;">Unit Price</th>
-        <th style="text-align:right;width:130px;">Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in invoice.items.all %}
-      <tr>
-        <td style="text-align:center;font-weight:700;color:#94a3b8;">{{ item.sr_no }}</td>
-        <td><strong>{{ item.product_name }}</strong></td>
-        <td style="text-align:center;">{{ item.quantity }}</td>
-        <td style="text-align:right;">Rs. {{ item.unit_price|floatformat:2 }}</td>
-        <td style="text-align:right;font-weight:700;">Rs. {{ item.amount|floatformat:2 }}</td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:2rem;">No items found.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <div class="total-section">
-    <span style="font-size:1rem;font-weight:600;">GRAND TOTAL</span>
-    <span style="font-size:1.8rem;font-weight:800;">Rs. {{ invoice.total_amount|floatformat:2 }}</span>
+  <div class="bill-parties">
+    <div>
+      <h3>Bill to</h3>
+      <p class="who">{{ invoice.customer_name }}</p>
+      {% if invoice.customer_email %}<p>{{ invoice.customer_email }}</p>{% endif %}
+      {% if invoice.customer_address %}<p>{{ invoice.customer_address }}</p>{% endif %}
+    </div>
+    <div>
+      <h3>Summary</h3>
+      <p class="who">{{ invoice.items.count }} item{{ invoice.items.count|pluralize }}</p>
+      <p>Created {{ invoice.created_at|date:"d M Y, H:i" }}</p>
+      {% if invoice.updated_at != invoice.created_at %}<p>Updated {{ invoice.updated_at|date:"d M Y, H:i" }}</p>{% endif %}
+    </div>
   </div>
-</div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th class="sr">#</th>
+          <th>Product</th>
+          <th class="num hide-sm" style="width:90px">Qty</th>
+          <th class="num hide-sm" style="width:130px">Unit price</th>
+          <th class="num" style="width:140px">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in invoice.items.all %}
+        <tr>
+          <td class="sr">{{ item.sr_no }}</td>
+          <td><strong>{{ item.product_name }}</strong><span class="item-sub">{{ item.quantity }} &times; Rs. {{ item.unit_price|floatformat:"2g" }}</span></td>
+          <td class="num hide-sm">{{ item.quantity }}</td>
+          <td class="num hide-sm">Rs. {{ item.unit_price|floatformat:"2g" }}</td>
+          <td class="num"><strong>Rs. {{ item.amount|floatformat:"2g" }}</strong></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="muted" style="text-align:center;padding:32px">No items found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bill-total">
+    <span class="label">Grand total</span>
+    <span class="amount">Rs. {{ invoice.total_amount|floatformat:"2g" }}</span>
+  </div>
+
+  {% if company_profile and company_profile.phone or company_profile.email or company_profile.address %}
+  <div class="bill-foot">
+    {% if company_profile.phone %}<span>{{ company_profile.phone }}</span>{% endif %}
+    {% if company_profile.email %}<span>{{ company_profile.email }}</span>{% endif %}
+    {% if company_profile.address %}<span>{{ company_profile.address }}</span>{% endif %}
+  </div>
+  {% endif %}
+</article>
 {% endblock %}
