@@ -24,6 +24,7 @@
 </head>
 <body>
 
+  
 <!-- Icon sprite -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></symbol>
@@ -63,13 +64,6 @@
       </span>
     </a>
 
-    <nav class="nav" aria-label="Main">
-      <a href="{% url 'dashboard' %}" class="{% if u == 'dashboard' or u == 'invoice_detail' or u == 'edit_invoice' or u == 'delete_invoice' %}is-active{% endif %}">Dashboard</a>
-      <a href="{% url 'create_invoice' %}" class="{% if u == 'create_invoice' %}is-active{% endif %}">New invoice</a>
-      <a href="{% url 'products' %}" class="{% if u == 'products' or u == 'edit_product' %}is-active{% endif %}">Products</a>
-      <a href="{% url 'monthly_report' %}" class="{% if u == 'monthly_report' %}is-active{% endif %}">Reports</a>
-      <a href="{% url 'upload_payment_proof' %}" class="{% if u == 'upload_payment_proof' %}is-active{% endif %}">Payment proof</a>
-    </nav>
 
     <div class="topbar-end">
       <button type="button" class="icon-btn" id="themeToggle" aria-label="Switch light or dark theme">
@@ -89,16 +83,59 @@
   </div>
 </header>
 
-<nav class="tabbar" aria-label="Main">
-  <a href="{% url 'dashboard' %}" class="{% if u == 'dashboard' or u == 'invoice_detail' or u == 'edit_invoice' or u == 'delete_invoice' %}is-active{% endif %}"><svg class="i"><use href="#i-home"/></svg>Home</a>
-  <a href="{% url 'products' %}" class="{% if u == 'products' or u == 'edit_product' %}is-active{% endif %}"><svg class="i"><use href="#i-box"/></svg>Products</a>
-  <a href="{% url 'create_invoice' %}" class="tab-new {% if u == 'create_invoice' %}is-active{% endif %}"><span class="tab-plus"><svg class="i"><use href="#i-plus"/></svg></span>New</a>
-  <a href="{% url 'monthly_report' %}" class="{% if u == 'monthly_report' %}is-active{% endif %}"><svg class="i"><use href="#i-chart"/></svg>Reports</a>
-  <a href="{% url 'profile_settings' %}" class="{% if u == 'profile_settings' or u == 'upload_payment_proof' %}is-active{% endif %}"><svg class="i"><use href="#i-user"/></svg>Account</a>
-</nav>
-{% endwith %}
-{% endif %}
+<div class="containervb">
+  <div> </div>
+  <div> 
 
+<div class="dropdown">
+  <button onclick="myFunction()" class="dropbtn">Dropdown</button>
+  <div id="myDropdown" class="dropdown-content">
+    <a href="{% url 'dashboard' %}" class="{% if u == 'dashboard' or u == 'invoice_detail' or u == 'edit_invoice' or u == 'delete_invoice' %}is-active{% endif %}">Dashboard</a>
+    <br><a href="{% url 'create_invoice' %}" class="{% if u == 'create_invoice' %}is-active{% endif %}">New invoice</a>
+    <br><a href="{% url 'products' %}" class="{% if u == 'products' or u == 'edit_product' %}is-active{% endif %}">Products</a>
+    <br><a href="{% url 'monthly_report' %}" class="{% if u == 'monthly_report' %}is-active{% endif %}">Reports</a>
+    <a href="{% url 'upload_payment_proof' %}" class="{% if u == 'upload_payment_proof' %}is-active{% endif %}">Payment proof</a>
+  </div>
+</div>
+
+
+
+
+
+
+
+   
+    </div> 
+  
+    <div> </div>
+
+    <div> </div>
+
+  </div>
+
+  <script>
+    /* When the user clicks on the button, 
+    toggle between hiding and showing the dropdown content */
+    function myFunction() {
+      document.getElementById("myDropdown").classList.toggle("show");
+    }
+    
+    // Close the dropdown if the user clicks outside of it
+    window.onclick = function(event) {
+      if (!event.target.matches('.dropbtn')) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        var i;
+        for (i = 0; i < dropdowns.length; i++) {
+          var openDropdown = dropdowns[i];
+          if (openDropdown.classList.contains('show')) {
+            openDropdown.classList.remove('show');
+          }
+        }
+      }
+    }
+    </script>
+  {% endwith %}
+{% endif %}
 <main class="shell {% block main_class %}{% endblock %}">
   {% if messages %}
   <div class="messages" role="status">
@@ -107,6 +144,7 @@
   {% endif %}
   {% block content %}{% endblock %}
 </main>
+
 
 <footer class="site-footer">
   <div class="site-footer-inner">
