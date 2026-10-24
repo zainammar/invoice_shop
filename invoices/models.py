@@ -5,11 +5,15 @@ from django.db import models
 
 
 class PaymentProof(models.Model):
+    
     invoice = models.ForeignKey(
-        "Invoice",
-        on_delete=models.CASCADE,
-        related_name="payment_proofs",
-    )
+    "Invoice",
+    on_delete=models.CASCADE,
+    related_name="payment_proofs",
+    null=True,
+    blank=True,
+ )
+
     payment_method = models.CharField(max_length=100, blank=True)
     transaction_id = models.CharField(max_length=255, blank=True)
     proof_image = models.ImageField(

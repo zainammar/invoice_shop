@@ -26,8 +26,12 @@
 {% block extra_style %}{% endblock %}
 </head>
 <body>
+  <div class="containervb ">
+    <div class="grid-item-1">
 
-  
+    </div>
+    <div class="grid-item-1">
+
 <!-- Icon sprite -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></symbol>
@@ -51,24 +55,48 @@
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
 </svg>
 
+    </div>
+    <div class="grid-item-1">
+
+    </div>
+    <div class="grid-item-1">
+
+    </div>
+  </div>
+  
 {% if user.is_authenticated %}
 {% with u=request.resolver_match.url_name %}
+<a class="brand" href="{% url 'dashboard' %}">
+  {% if company_profile and company_profile.company_logo %}
+    <img src="{{ company_profile.company_logo.url }}" alt="" class="brand-logo-img">
+  {% else %}
+    <span class="brand-logo-placeholder"><svg class="i"><use href="#i-file"/></svg></span>
+  {% endif %}
+  <span class="brand-text">
+    <span class="company-name">{% if company_profile %}{{ company_profile.company_name }}{% else %}Invoice Shop{% endif %}</span>
+    <span class="brand-sub">Invoice management</span>
+  </span>
+</a>
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="{% url 'dashboard' %}">
-      {% if company_profile and company_profile.company_logo %}
-        <img src="{{ company_profile.company_logo.url }}" alt="" class="brand-logo-img">
-      {% else %}
-        <span class="brand-logo-placeholder"><svg class="i"><use href="#i-file"/></svg></span>
-      {% endif %}
-      <span class="brand-text">
-        <span class="company-name">{% if company_profile %}{{ company_profile.company_name }}{% else %}Invoice Shop{% endif %}</span>
-        <span class="brand-sub">Invoice management</span>
-      </span>
-    </a>
+    <div class="dropdown">
+      <button onclick="myFunction()" class="dropbtn">Dropdown</button>
+      <div id="myDropdown" class="dropdown-content">
+        <a href="{% url 'dashboard' %}" class="{% if u == 'dashboard' or u == 'invoice_detail' or u == 'edit_invoice' or u == 'delete_invoice' %}is-active{% endif %}">Dashboard</a>
+        <br><a href="{% url 'create_invoice' %}" class="{% if u == 'create_invoice' %}is-active{% endif %}">New invoice</a>
+        <br><a href="{% url 'products' %}" class="{% if u == 'products' or u == 'edit_product' %}is-active{% endif %}">Products</a>
+        <br><a href="{% url 'monthly_report' %}" class="{% if u == 'monthly_report' %}is-active{% endif %}">Reports</a>
+        <br><a href="{% url 'profile_settings' %}" class="{% if u == 'user-chip' %}is-active{% endif %}">Profile</a>
+       
+        
+        <a href="{% url 'upload_payment_proof' %}" class="{% if u == 'upload_payment_proof' %}is-active{% endif %}">Payment proof</a>
+      </div>
+    </div>
+ 
 
 
     <div class="topbar-end">
+  
       <button type="button" class="icon-btn" id="themeToggle" aria-label="Switch light or dark theme">
         <svg class="i icon-sun"><use href="#i-sun"/></svg>
         <svg class="i icon-moon"><use href="#i-moon"/></svg>
@@ -90,16 +118,7 @@
   <div> </div>
   <div> 
 
-<div class="dropdown">
-  <button onclick="myFunction()" class="dropbtn">Dropdown</button>
-  <div id="myDropdown" class="dropdown-content">
-    <a href="{% url 'dashboard' %}" class="{% if u == 'dashboard' or u == 'invoice_detail' or u == 'edit_invoice' or u == 'delete_invoice' %}is-active{% endif %}">Dashboard</a>
-    <br><a href="{% url 'create_invoice' %}" class="{% if u == 'create_invoice' %}is-active{% endif %}">New invoice</a>
-    <br><a href="{% url 'products' %}" class="{% if u == 'products' or u == 'edit_product' %}is-active{% endif %}">Products</a>
-    <br><a href="{% url 'monthly_report' %}" class="{% if u == 'monthly_report' %}is-active{% endif %}">Reports</a>
-    <a href="{% url 'upload_payment_proof' %}" class="{% if u == 'upload_payment_proof' %}is-active{% endif %}">Payment proof</a>
-  </div>
-</div>
+
 
 
 
@@ -112,7 +131,6 @@
   
     <div> </div>
 
-    <div> </div>
 
   </div>
 

@@ -14,14 +14,32 @@
     <h2 class="card-title">Upload proof</h2>
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
+
       <div class="form-group">
-        <label for="amount">Amount (Rs.)</label>
-        <input id="amount" type="number" step="0.01" name="amount" class="form-control" placeholder="e.g. 5000">
+        <label for="invoice_id">Invoice</label>
+        <select id="invoice_id" name="invoice_id" class="form-control" required>
+          <option value="">— Select invoice —</option>
+          {% for inv in invoices %}
+          <option value="{{ inv.pk }}">{{ inv.invoice_number }} — {{ inv.customer_name }} (Rs. {{ inv.grand_total }})</option>
+          {% endfor %}
+        </select>
       </div>
+
       <div class="form-group">
-        <label for="proof_file">Payment proof</label>
-        <input id="proof_file" type="file" name="proof_file" required>
+        <label for="payment_method">Payment method</label>
+        <input id="payment_method" type="text" name="payment_method" class="form-control" placeholder="e.g. JazzCash, Bank transfer">
       </div>
+
+      <div class="form-group">
+        <label for="transaction_id">Transaction ID</label>
+        <input id="transaction_id" type="text" name="transaction_id" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="proof_image">Payment proof</label>
+        <input id="proof_image" type="file" name="proof_image" accept="image/*" required>
+      </div>
+
       <button type="submit" class="btn btn-primary"><svg class="i"><use href="#i-upload"/></svg>Upload</button>
     </form>
   </section>
@@ -31,18 +49,19 @@
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Date</th><th class="num">Amount</th><th>Status</th><th>File</th></tr>
+          <tr><th>Date</th><th>Invoice</th><th>Method</th><th>Txn ID</th><th>File</th></tr>
         </thead>
         <tbody>
           {% for proof in proofs %}
           <tr>
             <td>{{ proof.uploaded_at|date:"d M Y" }}</td>
-            <td class="num">{% if proof.amount %}Rs. {{ proof.amount }}{% else %}-{% endif %}</td>
-            <td>{% if proof.is_approved %}<span class="badge badge-ok">Approved</span>{% else %}<span class="badge badge-wait">Pending</span>{% endif %}</td>
-            <td><a href="{{ proof.proof_file.url }}" target="_blank" rel="noopener">View</a></td>
+            <td>{{ proof.invoice.invoice_number }}</td>
+            <td>{{ proof.payment_method|default:"-" }}</td>
+            <td>{{ proof.transaction_id|default:"-" }}</td>
+            <td>{% if proof.proof_image %}<a href="{{ proof.proof_image.url }}" target="_blank" rel="noopener">View</a>{% else %}-{% endif %}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="4" class="muted" style="text-align:center;padding:28px">No payment proofs uploaded yet.</td></tr>
+          <tr><td colspan="5" class="muted" style="text-align:center;padding:28px">No payment proofs uploaded yet.</td></tr>
           {% endfor %}
         </tbody>
       </table>

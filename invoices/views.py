@@ -13,7 +13,7 @@ from django.db.models import Count, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-
+from .models import Invoice, PaymentProof
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
@@ -21,6 +21,7 @@ from reportlab.pdfgen import canvas
 
 from .models import (
     CompanyProfile,
+
     Invoice,
     InvoiceItem,
     PaymentProof,
@@ -944,18 +945,45 @@ def report_pdf(request):
 # ═══════════════════════════════════════════════════════════
 @login_required
 def upload_payment_proof(request):
+    from django.contrib import messages
+
     if request.method == "POST":
-        proof_file = request.FILES.get("proof_file")
-        raw_amount = request.POST.get("amount")
-        amount = to_decimal(raw_amount) if raw_amount else None
+        invoice_id = request.POST.get("invoice_id")
+        proof_image = request.FILES.get("proof_image")
+        payment_method = request.POST.get("payment_method", "").strip()
+        transaction_id = request.POST.get("transaction_id", "").strip()
 
-        if proof_file:
-            PaymentProof.objects.create(
-                user=request.user,
-                proof_file=proof_file,
-                amount=amount,
-            )
-            return redirect("upload_payment_proof")
+        print("POST DATA:", request.POST)
+        print("Logged-in user ID:", request.user.id)
+        print("Received invoice_id:", request.POST.get("invoice_id"))
+        # Only allow the logged-in user's invoices.
+        invoice = get_object_or_404(
+            Invoice,
+            pk=invoice_id,
+            user=request.user,
+        )
 
-    proofs = PaymentProof.objects.filter(user=request.user).order_by("-uploaded_at")
-    return render(request, "invoices/upload_payment_proof.html", {"proofs": proofs})
+        PaymentProof.objects.create(
+            invoice=invoice,
+            payment_method=payment_method,
+            transaction_id=transaction_id,
+            proof_image=proof_image,
+        )
+
+        messages.success(request, "Payment proof uploaded successfully.")
+        return redirect("upload_payment_proof")
+
+    invoices = Invoice.objects.filter(user=request.user).order_by("-created_at")
+
+    proofs = PaymentProof.objects.filter(
+        invoice__user=request.user
+    ).select_related("invoice").order_by("-uploaded_at")
+
+    return render(
+        request,
+        "invoices/upload_payment_proof.html",
+        {
+            "invoices": invoices,
+            "proofs": proofs,
+        },
+    )
