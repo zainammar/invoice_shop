@@ -81,44 +81,30 @@
       </section>
     </div>
 
-    <div class="form-group" style="margin-top:16px">
-      <label for="discount_type">Discount type</label>
-      <select name="discount_type" id="discount_type" class="form-control">
-        <option value="percent">Percentage (%)</option>
-        <option value="fixed">Fixed amount (Rs.)</option>
-      </select>
-    </div>
-    
-    <div class="form-group">
-      <label for="discount_value">Discount value</label>
-      <input
-        type="number"
-        name="discount_value"
-        id="discount_value"
-        class="form-control"
-        value="0"
-        min="0"
-        step="0.01"
-        placeholder="Enter discount"
-      >
-    </div>
-    
-    <div class="aside-line">
-      <span>Subtotal</span>
-      <strong id="subtotalDisplay">Rs. 0.00</strong>
-    </div>
-    
-    <div class="aside-line">
-      <span>Discount</span>
-      <strong id="discountDisplay">Rs. 0.00</strong>
-    </div>
-    
     <aside class="card invoice-aside" aria-label="Invoice summary">
       <h2 class="card-title">Summary</h2>
+
       <div class="aside-line"><span>Date</span><strong id="invoiceDateDisplay"></strong></div>
       <div class="aside-line"><span>Items</span><strong id="itemCount">1</strong></div>
       <div class="aside-line"><span>Products in catalog</span><strong>{{ products.count }}</strong></div>
+
+      <div class="form-group" style="margin-top:16px">
+        <label for="discount_type">Discount type</label>
+        <select name="discount_type" id="discount_type" class="form-control">
+          <option value="percent">Percentage (%)</option>
+          <option value="fixed">Fixed amount (Rs.)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="discount_value">Discount value</label>
+        <input type="number" name="discount_value" id="discount_value" class="form-control"
+               value="0" min="0" step="0.01" placeholder="0">
+      </div>
+
+      <div class="aside-line"><span>Subtotal</span><strong id="subtotalDisplay">Rs. 0.00</strong></div>
+      <div class="aside-line"><span>Discount</span><strong id="discountDisplay">- Rs. 0.00</strong></div>
       <div class="aside-total"><span>Grand total</span><span class="total-value" id="grandTotal">Rs. 0.00</span></div>
+
       <button type="submit" class="btn btn-primary btn-block">Save invoice</button>
       <a href="{% url 'dashboard' %}" class="btn btn-outline btn-block" style="margin-top:8px">Cancel</a>
     </aside>
@@ -126,4 +112,51 @@
 </form>
 {% endblock %}
 
-{% block extra_script %}<script src="{% static 'js/invoice-items.js' %}"></script>{% endblock %}
+{% block extra_script %}
+<script src="{% static 'js/invoice-items.js' %}"></script>
+<script>
+/* Live Subtotal / Discount / Grand total (invoice-items.js ke baad chalta hai) */
+(function () {
+  var form = document.getElementById('invoiceForm');
+  if (!form) return;
+
+  var typeEl  = document.getElementById('discount_type');
+  var valueEl = document.getElementById('discount_value');
+  var subEl   = document.getElementById('subtotalDisplay');
+  var discEl  = document.getElementById('discountDisplay');
+  var grandEl = document.getElementById('grandTotal');
+
+  function money(n) {
+    return 'Rs. ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function recalc() {
+    var subtotal = 0;
+    form.querySelectorAll('.item-row').forEach(function (row) {
+      var q = parseFloat(row.querySelector('.qty').value) || 0;
+      var p = parseFloat(row.querySelector('.price').value) || 0;
+      subtotal += q * p;
+    });
+
+    var isPercent = typeEl.value === 'percent';
+    if (isPercent) { valueEl.max = 100; } else { valueEl.removeAttribute('max'); }
+
+    var val = Math.max(parseFloat(valueEl.value) || 0, 0);
+    var disc = isPercent ? subtotal * Math.min(val, 100) / 100 : val;
+    disc = Math.min(disc, subtotal);
+
+    subEl.textContent   = money(subtotal);
+    discEl.textContent  = '- ' + money(disc);
+    grandEl.textContent = money(subtotal - disc);
+  }
+
+  // setTimeout: pehle invoice-items.js apna kaam kare, phir hum grand total discount ke saath override karein
+  function schedule() { setTimeout(recalc, 0); }
+
+  ['input', 'change', 'click'].forEach(function (ev) {
+    form.addEventListener(ev, schedule);
+  });
+  recalc();
+})();
+</script>
+{% endblock %}

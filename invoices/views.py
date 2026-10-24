@@ -4,7 +4,7 @@ import uuid
 from calendar import month_name
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
-
+from .invoice_pdf import build_invoice_pdf   # ← ye nayi line
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -987,3 +987,19 @@ def upload_payment_proof(request):
             "proofs": proofs,
         },
     )
+
+
+from .models import (
+    CompanyProfile,
+    Invoice,
+    InvoiceItem,
+    PaymentProof,
+    UserProduct,
+)
+@login_required
+def download_pdf(request, pk):
+    invoice = get_object_or_404(Invoice, pk=pk, user=request.user)
+    pdf_bytes = build_invoice_pdf(invoice, request.user)
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="Invoice_{invoice.invoice_number}.pdf"'
+    return response
