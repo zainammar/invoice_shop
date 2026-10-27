@@ -8,6 +8,9 @@
     <p class="page-subtitle">Viewing {{ invoice.invoice_number }}</p>
   </div>
   <div class="actions">
+    {% if invoice.balance_due > 0 %}
+    <a href="{% url 'add_payment' invoice.pk %}" class="btn btn-success">Add Payment</a>
+    {% endif %}
     <a href="{% url 'edit_invoice' invoice.pk %}" class="btn btn-warning"><svg class="i"><use href="#i-edit"/></svg>Edit</a>
     <a href="{% url 'download_pdf' invoice.pk %}" class="btn btn-success"><svg class="i"><use href="#i-download"/></svg>Download PDF</a>
     <a href="{% url 'delete_invoice' invoice.pk %}" class="btn btn-danger"><svg class="i"><use href="#i-trash"/></svg>Delete</a>
@@ -27,6 +30,13 @@
       <div class="kind">Invoice</div>
       <div class="number">{{ invoice.invoice_number }}</div>
       <div class="date">Issued {{ invoice.created_at|date:"d M Y" }}</div>
+      {% if invoice.payment_status == "paid" %}
+        <span class="pay-badge pay-paid">PAID</span>
+      {% elif invoice.payment_status == "partial" %}
+        <span class="pay-badge pay-partial">PARTIAL</span>
+      {% else %}
+        <span class="pay-badge pay-unpaid">UNPAID</span>
+      {% endif %}
     </div>
   </div>
 
@@ -72,12 +82,53 @@
     </table>
   </div>
 
-  <div class="bill-total">
-    <span class="label">Grand total</span>
-    <span class="amount">Rs. {{ invoice.total_amount|floatformat:"2g" }}</span>
+  {# ── Totals / payment summary ── #}
+  <div class="pay-summary">
+    <div class="pay-row"><span>Subtotal</span><span>Rs. {{ invoice.subtotal|floatformat:"2g" }}</span></div>
+    {% if invoice.discount_amount > 0 %}
+    <div class="pay-row"><span>Discount</span><span>- Rs. {{ invoice.discount_amount|floatformat:"2g" }}</span></div>
+    {% endif %}
+    <div class="pay-row"><span>Grand total</span><strong>Rs. {{ invoice.total_amount|floatformat:"2g" }}</strong></div>
+    <div class="pay-row"><span>Paid</span><span>Rs. {{ invoice.amount_paid|floatformat:"2g" }}</span></div>
+    <div class="pay-row pay-balance"><span>Balance due</span><strong>Rs. {{ invoice.balance_due|floatformat:"2g" }}</strong></div>
   </div>
 
-  {% if company_profile and company_profile.phone or company_profile.email or company_profile.address %}
+  {# ── Payment history ── #}
+  {% if invoice.payments.all %}
+  <div class="table-wrap" style="margin-top:24px">
+    <h3 style="margin:0 0 10px">Payment history</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Method</th>
+          <th>Note</th>
+          <th class="num">Amount</th>
+          <th style="width:90px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in invoice.payments.all %}
+        <tr>
+          <td>{{ p.paid_at|date:"d M Y" }}</td>
+          <td>{{ p.payment_method|default:"-" }}</td>
+          <td>{{ p.note|default:"-" }}</td>
+          <td class="num"><strong>Rs. {{ p.amount|floatformat:"2g" }}</strong></td>
+          <td>
+            <form method="post" action="{% url 'delete_payment' p.pk %}"
+                  onsubmit="return confirm('Ye payment delete karein?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if company_profile.phone or company_profile.email or company_profile.address %}
   <div class="bill-foot">
     {% if company_profile.phone %}<span>{{ company_profile.phone }}</span>{% endif %}
     {% if company_profile.email %}<span>{{ company_profile.email }}</span>{% endif %}
@@ -85,4 +136,14 @@
   </div>
   {% endif %}
 </article>
+
+<style>
+  .pay-badge{display:inline-block;margin-top:8px;padding:3px 12px;border-radius:999px;font-size:.75rem;font-weight:700;letter-spacing:.05em}
+  .pay-paid{background:#dcfce7;color:#166534}
+  .pay-partial{background:#fef3c7;color:#92400e}
+  .pay-unpaid{background:#fee2e2;color:#991b1b}
+  .pay-summary{margin:20px 0 0 auto;max-width:360px;display:flex;flex-direction:column;gap:8px}
+  .pay-row{display:flex;justify-content:space-between;gap:16px}
+  .pay-balance{border-top:1px solid rgba(148,163,184,.3);padding-top:10px;font-size:1.1rem}
+</style>
 {% endblock %}

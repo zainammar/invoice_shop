@@ -4,26 +4,28 @@ import uuid
 from calendar import month_name
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
-from .invoice_pdf import build_invoice_pdf   # ← ye nayi line
+
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.db.models import Count, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from .models import Invoice, PaymentProof
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 
+from .forms import PaymentForm
+from .invoice_pdf import build_invoice_pdf
 from .models import (
     CompanyProfile,
-
     Invoice,
     InvoiceItem,
+    Payment,
     PaymentProof,
     UserProduct,
 )
@@ -50,8 +52,8 @@ def to_int(value, default=1):
 def apply_invoice_form(request, invoice):
     """Customer + discount fields POST se invoice par set karta hai."""
     invoice.customer_name = request.POST.get('customer_name', '').strip()
-    invoice.customer_email = request.POST.get('customer_email', '')
-    invoice.customer_address = request.POST.get('customer_address', '')
+    invoice.customer_email = request.POST.get('customer_email', '').strip()
+    invoice.customer_address = request.POST.get('customer_address', '').strip()
 
     dtype = request.POST.get('discount_type', Invoice.DISCOUNT_PERCENT)
     if dtype not in (Invoice.DISCOUNT_PERCENT, Invoice.DISCOUNT_FIXED):
@@ -73,10 +75,9 @@ def save_invoice_items(request, invoice):
     unit_prices = request.POST.getlist('unit_price[]')
     item_discounts = request.POST.getlist('discount_percent[]')  # optional
 
-    has_item_discount = hasattr(InvoiceItem, 'discount_percent')
-
     rows = zip(product_ids, product_names, quantities, unit_prices)
-    for i, (pid, pname, qty, price) in enumerate(rows, 1):
+    sr = 1  # sirf valid rows ko number milta hai (gap nahi aayega)
+    for idx, (pid, pname, qty, price) in enumerate(rows):
         if not pname.strip():
             continue
 
@@ -84,19 +85,19 @@ def save_invoice_items(request, invoice):
         if pid:
             prod_obj = UserProduct.objects.filter(pk=pid, user=request.user).first()
 
-        kwargs = dict(
+        raw_disc = item_discounts[idx] if idx < len(item_discounts) else '0'
+        disc = min(max(to_decimal(raw_disc), Decimal('0')), Decimal('100'))
+
+        InvoiceItem.objects.create(
             invoice=invoice,
             product=prod_obj,
-            sr_no=i,
+            sr_no=sr,
             product_name=pname.strip(),
             quantity=to_int(qty, 1),
             unit_price=to_decimal(price),
+            discount_percent=disc,
         )
-        if has_item_discount:
-            raw = item_discounts[i - 1] if len(item_discounts) >= i else '0'
-            kwargs['discount_percent'] = min(max(to_decimal(raw), Decimal('0')), Decimal('100'))
-
-        InvoiceItem.objects.create(**kwargs)
+        sr += 1
 
 
 def products_to_json(products):
@@ -128,16 +129,21 @@ def register_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
     if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email', '')
-        password = request.POST.get('password')
-        confirm = request.POST.get('confirm_password')
+        username = (request.POST.get('username') or '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password') or ''
+        confirm = request.POST.get('confirm_password') or ''
+
+        if not username or not password:
+            messages.error(request, 'Username and password are required!')
+            return render(request, 'invoices/register.html')
         if password != confirm:
             messages.error(request, 'Passwords do not match!')
             return render(request, 'invoices/register.html')
         if User.objects.filter(username=username).exists():
             messages.error(request, 'Username already taken!')
             return render(request, 'invoices/register.html')
+
         user = User.objects.create_user(username=username, email=email, password=password)
         login(request, user)
         messages.success(request, f'Welcome, {username}! Start by adding your products.')
@@ -231,7 +237,12 @@ def products_json(request):
 # ═══════════════════════════════════════════════════════════
 @login_required
 def dashboard(request):
-    invoices = Invoice.objects.filter(user=request.user).order_by('-created_at')
+    invoices = (
+        Invoice.objects
+        .filter(user=request.user)
+        .prefetch_related('items', 'payments')
+        .order_by('-created_at')
+    )
 
     month = request.GET.get('month')
     if month:
@@ -259,6 +270,10 @@ def dashboard(request):
 @login_required
 def create_invoice(request):
     products = UserProduct.objects.filter(user=request.user)
+    context = {
+        'products': products,
+        'products_json': products_to_json(products),
+    }
 
     if request.method == 'POST':
         invoice = Invoice(
@@ -266,21 +281,28 @@ def create_invoice(request):
             invoice_number=f"INV-{uuid.uuid4().hex[:8].upper()}",
         )
         apply_invoice_form(request, invoice)
-        invoice.save()
-        save_invoice_items(request, invoice)
+
+        if not invoice.customer_name:
+            messages.error(request, 'Customer name is required.')
+            return render(request, 'invoices/create_invoice.html', context)
+
+        with transaction.atomic():
+            invoice.save()
+            save_invoice_items(request, invoice)
 
         messages.success(request, f'Invoice {invoice.invoice_number} created!')
         return redirect('invoice_detail', pk=invoice.pk)
 
-    return render(request, 'invoices/create_invoice.html', {
-        'products': products,
-        'products_json': products_to_json(products),
-    })
+    return render(request, 'invoices/create_invoice.html', context)
 
 
 @login_required
 def invoice_detail(request, pk):
-    invoice = get_object_or_404(Invoice, pk=pk, user=request.user)
+    invoice = get_object_or_404(
+        Invoice.objects.prefetch_related('items', 'payments'),
+        pk=pk,
+        user=request.user,
+    )
     return render(request, 'invoices/invoice_detail.html', {'invoice': invoice})
 
 
@@ -288,21 +310,37 @@ def invoice_detail(request, pk):
 def edit_invoice(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk, user=request.user)
     products = UserProduct.objects.filter(user=request.user)
+    context = {
+        'invoice': invoice,
+        'products': products,
+        'products_json': products_to_json(products),
+    }
 
     if request.method == 'POST':
         apply_invoice_form(request, invoice)
-        invoice.save()
-        invoice.items.all().delete()
-        save_invoice_items(request, invoice)
+
+        if not invoice.customer_name:
+            messages.error(request, 'Customer name is required.')
+            return render(request, 'invoices/edit_invoice.html', context)
+
+        # Atomic: beech me error aaye to purane items gum nahi honge
+        with transaction.atomic():
+            invoice.save()
+            invoice.items.all().delete()
+            save_invoice_items(request, invoice)
+
+        # Edit ke baad total payments se kam ho gaya to warning
+        invoice = Invoice.objects.prefetch_related('items', 'payments').get(pk=invoice.pk)
+        if invoice.amount_paid() > invoice.grand_total():
+            messages.warning(
+                request,
+                'Invoice total ab received payments se kam hai. Payments check kar lein.',
+            )
 
         messages.success(request, 'Invoice updated!')
         return redirect('invoice_detail', pk=invoice.pk)
 
-    return render(request, 'invoices/edit_invoice.html', {
-        'invoice': invoice,
-        'products': products,
-        'products_json': products_to_json(products),
-    })
+    return render(request, 'invoices/edit_invoice.html', context)
 
 
 @login_required
@@ -317,288 +355,57 @@ def delete_invoice(request, pk):
 
 
 # ═══════════════════════════════════════════════════════════
+# Payments (partial / full, balance tracking)
+# ═══════════════════════════════════════════════════════════
+@login_required
+def add_payment(request, pk):
+    invoice = get_object_or_404(
+        Invoice.objects.prefetch_related('items', 'payments'),
+        pk=pk,
+        user=request.user,
+    )
+
+    if invoice.balance_due() <= 0:
+        messages.info(request, 'Ye invoice already fully paid hai.')
+        return redirect('invoice_detail', pk=invoice.pk)
+
+    if request.method == 'POST':
+        form = PaymentForm(request.POST, invoice=invoice)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.invoice = invoice
+            payment.save()
+            messages.success(request, f'Payment Rs. {payment.amount:,.0f} record ho gayi.')
+            return redirect('invoice_detail', pk=invoice.pk)
+    else:
+        # Default amount = poora balance (full payment ke liye one-click)
+        form = PaymentForm(initial={'amount': invoice.balance_due()}, invoice=invoice)
+
+    return render(request, 'invoices/add_payment.html', {'form': form, 'invoice': invoice})
+
+
+@login_required
+def delete_payment(request, pk):
+    payment = get_object_or_404(Payment, pk=pk, invoice__user=request.user)
+    invoice_pk = payment.invoice_id
+    if request.method == 'POST':
+        payment.delete()
+        messages.success(request, 'Payment delete ho gayi.')
+    return redirect('invoice_detail', pk=invoice_pk)
+
+
+# ═══════════════════════════════════════════════════════════
 # Invoice PDF
 # ═══════════════════════════════════════════════════════════
 @login_required
 def download_pdf(request, pk):
-    invoice = get_object_or_404(Invoice, pk=pk, user=request.user)
-
-    # ── Company profile ──────────────────────────────────────
-    profile = CompanyProfile.objects.filter(user=request.user).first()
-
-    company_name = (profile.company_name if profile else None) or request.user.username
-    company_address = (profile.address if profile else '') or ''
-    company_phone = (profile.phone if profile else '') or ''
-    company_email = (profile.email if profile else '') or ''
-    logo_path = profile.company_logo.path if (profile and profile.company_logo) else None
-    avatar_path = profile.user_avatar.path if (profile and profile.user_avatar) else None
-
-    # ── Colors ───────────────────────────────────────────────
-    C_DARK = colors.HexColor('#0f172a')
-    C_ACCENT = colors.HexColor('#4f46e5')
-    C_ACCENT2 = colors.HexColor('#818cf8')
-    C_LIGHT = colors.HexColor('#f8fafc')
-    C_BORDER = colors.HexColor('#e2e8f0')
-    C_TEXT = colors.HexColor('#1e293b')
-    C_MUTED = colors.HexColor('#64748b')
-    C_ROW_ALT = colors.HexColor('#f1f5f9')
-    C_SLATE = colors.HexColor('#94a3b8')
-
-    buf = io.BytesIO()
-    W, H = A4
-    M = 18 * mm
-    CW = W - 2 * M
-    cv = canvas.Canvas(buf, pagesize=A4)
-    cv.setTitle(f"Invoice {invoice.invoice_number}")
-
-    # ════════ 1. HEADER BAND ════════
-    HEADER_H = 54 * mm
-    cv.setFillColor(C_DARK)
-    cv.rect(0, H - HEADER_H, W, HEADER_H, fill=1, stroke=0)
-
-    cv.saveState()
-    cv.setFillColor(colors.HexColor('#1e1b4b'))
-    cv.circle(W - 10 * mm, H - 5 * mm, 28 * mm, fill=1, stroke=0)
-    cv.setFillColor(colors.HexColor('#312e81'))
-    cv.circle(W - 2 * mm, H - 22 * mm, 18 * mm, fill=1, stroke=0)
-    cv.restoreState()
-
-    cv.setFillColor(C_ACCENT)
-    cv.rect(0, H - HEADER_H, 4 * mm, HEADER_H, fill=1, stroke=0)
-
-    # Logo
-    LOGO_SIZE = 14 * mm
-    LOGO_X = M + 4 * mm
-    LOGO_Y = H - 7 * mm - LOGO_SIZE
-
-    def draw_logo_placeholder():
-        draw_rounded_rect(cv, LOGO_X, LOGO_Y, LOGO_SIZE, LOGO_SIZE, 2 * mm, fc=C_ACCENT)
-        cv.setFillColor(colors.white)
-        cv.setFont('Helvetica-Bold', 10)
-        cv.drawCentredString(LOGO_X + LOGO_SIZE / 2, LOGO_Y + 4 * mm, company_name[:2].upper())
-
-    if logo_path:
-        try:
-            draw_rounded_rect(cv, LOGO_X - 1 * mm, LOGO_Y - 1 * mm,
-                              LOGO_SIZE + 2 * mm, LOGO_SIZE + 2 * mm, 2 * mm, fc=colors.white)
-            cv.drawImage(logo_path, LOGO_X, LOGO_Y, width=LOGO_SIZE, height=LOGO_SIZE,
-                         preserveAspectRatio=True, mask='auto')
-        except Exception:
-            draw_logo_placeholder()
-    else:
-        draw_logo_placeholder()
-
-    # Company name + address
-    TEXT_X = LOGO_X + LOGO_SIZE + 4 * mm
-    cv.setFillColor(colors.white)
-    cv.setFont('Helvetica-Bold', 16)
-    cv.drawString(TEXT_X, H - 14 * mm, company_name)
-    cv.setFillColor(C_ACCENT2)
-    cv.setFont('Helvetica', 8.5)
-    cv.drawString(TEXT_X, H - 21 * mm, company_address[:60])
-
-    # Phone / email (plain text — emoji Helvetica mein render nahi hote)
-    RX = W - M - 4 * mm
-    cv.setFillColor(C_SLATE)
-    cv.setFont('Helvetica', 8)
-    if company_phone:
-        cv.drawRightString(RX, H - 14 * mm, f'Tel: {company_phone}')
-    if company_email:
-        cv.drawRightString(RX, H - 21 * mm, f'Email: {company_email}')
-
-    # INVOICE label
-    cv.setFillColor(colors.white)
-    cv.setFont('Helvetica-Bold', 26)
-    cv.drawRightString(RX, H - 37 * mm, 'INVOICE')
-    cv.setFillColor(C_ACCENT2)
-    cv.setFont('Helvetica', 10)
-    cv.drawRightString(RX, H - 44 * mm, invoice.invoice_number)
-
-    # User chip
-    CHIP_Y = H - HEADER_H + 3 * mm
-    CHIP_X = M + 4 * mm
-    AV_SIZE = 8 * mm
-
-    def draw_avatar_placeholder():
-        draw_rounded_rect(cv, CHIP_X, CHIP_Y, AV_SIZE, AV_SIZE, AV_SIZE / 2,
-                          fc=colors.HexColor('#f59e0b'))
-        cv.setFillColor(colors.white)
-        cv.setFont('Helvetica-Bold', 7)
-        cv.drawCentredString(CHIP_X + AV_SIZE / 2, CHIP_Y + 2.5 * mm,
-                             request.user.username[:1].upper())
-
-    if avatar_path:
-        try:
-            cv.saveState()
-            p = cv.beginPath()
-            p.circle(CHIP_X + AV_SIZE / 2, CHIP_Y + AV_SIZE / 2, AV_SIZE / 2)
-            cv.clipPath(p, stroke=0)
-            cv.drawImage(avatar_path, CHIP_X, CHIP_Y, width=AV_SIZE, height=AV_SIZE,
-                         preserveAspectRatio=True, mask='auto')
-            cv.restoreState()
-        except Exception:
-            cv.restoreState()
-            draw_avatar_placeholder()
-    else:
-        draw_avatar_placeholder()
-
-    cv.setFillColor(C_SLATE)
-    cv.setFont('Helvetica', 7.5)
-    cv.drawString(CHIP_X + AV_SIZE + 2 * mm, CHIP_Y + 2.5 * mm,
-                  f'Prepared by: {request.user.username}')
-
-    # ════════ 2. BILL TO + INVOICE DETAILS ════════
-    INFO_Y = H - HEADER_H - 8 * mm
-    INFO_H = 34 * mm
-
-    draw_rounded_rect(cv, M, INFO_Y - INFO_H, CW * 0.52, INFO_H, 3 * mm,
-                      fc=C_LIGHT, sc=C_BORDER, lw=0.5)
-    cv.setFillColor(C_ACCENT)
-    cv.setFont('Helvetica-Bold', 7.5)
-    cv.drawString(M + 5 * mm, INFO_Y - 7 * mm, 'BILL TO')
-    cv.setFillColor(C_TEXT)
-    cv.setFont('Helvetica-Bold', 11)
-    cv.drawString(M + 5 * mm, INFO_Y - 14 * mm, invoice.customer_name)
-    cv.setFillColor(C_MUTED)
-    cv.setFont('Helvetica', 8.5)
-    if invoice.customer_email:
-        cv.drawString(M + 5 * mm, INFO_Y - 20 * mm, invoice.customer_email)
-    if invoice.customer_address:
-        cv.drawString(M + 5 * mm, INFO_Y - 26 * mm, invoice.customer_address[:55])
-
-    RX2 = M + CW * 0.56
-    RW = CW * 0.44
-    draw_rounded_rect(cv, RX2, INFO_Y - INFO_H, RW, INFO_H, 3 * mm,
-                      fc=C_LIGHT, sc=C_BORDER, lw=0.5)
-    detail_rows = [
-        ('Invoice No.', invoice.invoice_number),
-        ('Date', timezone.localtime(invoice.created_at).strftime('%d %b %Y')),
-        ('Prepared by', request.user.username),
-    ]
-    for i, (label, val) in enumerate(detail_rows):
-        yy = INFO_Y - 8 * mm - i * 8.5 * mm
-        cv.setFillColor(C_MUTED)
-        cv.setFont('Helvetica', 8)
-        cv.drawString(RX2 + 5 * mm, yy, label)
-        cv.setFillColor(C_TEXT)
-        cv.setFont('Helvetica-Bold', 8.5)
-        cv.drawRightString(RX2 + RW - 5 * mm, yy, val)
-
-    # ════════ 3. ITEMS TABLE ════════
-    TABLE_Y = INFO_Y - INFO_H - 8 * mm
-    items = list(invoice.items.all())
-    TH = 9 * mm
-
-    draw_rounded_rect(cv, M, TABLE_Y - TH, CW, TH, 2 * mm, fc=C_DARK)
-    cv.setFillColor(colors.white)
-    cv.setFont('Helvetica-Bold', 8)
-    cv.drawCentredString(M + 8 * mm, TABLE_Y - 6 * mm, 'SR#')
-    cv.drawString(M + 18 * mm, TABLE_Y - 6 * mm, 'PRODUCT / SERVICE')
-    cv.drawCentredString(M + CW - 68 * mm, TABLE_Y - 6 * mm, 'QTY')
-    cv.drawRightString(M + CW - 26 * mm, TABLE_Y - 6 * mm, 'UNIT PRICE')
-    cv.drawRightString(M + CW - 2 * mm, TABLE_Y - 6 * mm, 'AMOUNT')
-
-    ROW_H = 10 * mm
-    for i, item in enumerate(items):
-        ry = TABLE_Y - TH - i * ROW_H
-        cv.setFillColor(colors.white if i % 2 == 0 else C_ROW_ALT)
-        cv.rect(M, ry - ROW_H, CW, ROW_H, fill=1, stroke=0)
-        if i % 2 != 0:
-            cv.setFillColor(C_ACCENT)
-            cv.rect(M, ry - ROW_H, 1.5, ROW_H, fill=1, stroke=0)
-
-        cy = ry - 6.5 * mm
-        cv.setFillColor(C_MUTED)
-        cv.setFont('Helvetica-Bold', 8)
-        cv.drawCentredString(M + 8 * mm, cy, str(item.sr_no))
-
-        cv.setFillColor(C_TEXT)
-        cv.setFont('Helvetica-Bold', 9)
-        name = item.product_name[:40] + ('...' if len(item.product_name) > 40 else '')
-        cv.drawString(M + 18 * mm, cy, name)
-
-        cv.setFillColor(C_MUTED)
-        cv.setFont('Helvetica', 9)
-        cv.drawCentredString(M + CW - 68 * mm, cy, str(item.quantity))
-        cv.drawRightString(M + CW - 26 * mm, cy, f'Rs. {float(item.unit_price):,.0f}')
-
-        cv.setFillColor(C_ACCENT)
-        cv.setFont('Helvetica-Bold', 9)
-        cv.drawRightString(M + CW - 2 * mm, cy, f'Rs. {float(item.amount):,.0f}')
-
-    last_y = TABLE_Y - TH - len(items) * ROW_H
-    cv.setStrokeColor(C_BORDER)
-    cv.setLineWidth(0.5)
-    cv.line(M, last_y, M + CW, last_y)
-
-    # ════════ 4. TOTALS (with discount) ════════
-    subtotal = float(invoice.subtotal())
-    discount = float(invoice.discount_amount())
-    total = float(invoice.total_amount())
-    has_disc = discount > 0
-    off = 6 * mm if has_disc else 0
-
-    TOTAL_Y = last_y - 5 * mm
-    TOTAL_H = 30 * mm + off
-    TOTAL_W = 70 * mm
-    TX = M + CW - TOTAL_W
-
-    draw_rounded_rect(cv, TX, TOTAL_Y - TOTAL_H, TOTAL_W, TOTAL_H, 3 * mm, fc=C_DARK)
-    cv.setFillColor(C_SLATE)
-    cv.setFont('Helvetica', 8.5)
-    cv.drawString(TX + 5 * mm, TOTAL_Y - 9 * mm, 'Subtotal')
-    cv.drawRightString(TX + TOTAL_W - 5 * mm, TOTAL_Y - 9 * mm, f'Rs. {subtotal:,.0f}')
-
-    if has_disc:
-        label = 'Discount'
-        if invoice.discount_type == Invoice.DISCOUNT_PERCENT:
-            label += f' ({float(invoice.discount_value):g}%)'
-        cv.drawString(TX + 5 * mm, TOTAL_Y - 15 * mm, label)
-        cv.drawRightString(TX + TOTAL_W - 5 * mm, TOTAL_Y - 15 * mm, f'- Rs. {discount:,.0f}')
-
-    cv.setStrokeColor(colors.HexColor('#334155'))
-    cv.setLineWidth(0.5)
-    cv.line(TX + 5 * mm, TOTAL_Y - 13 * mm - off, TX + TOTAL_W - 5 * mm, TOTAL_Y - 13 * mm - off)
-
-    cv.setFillColor(colors.white)
-    cv.setFont('Helvetica-Bold', 11)
-    cv.drawString(TX + 5 * mm, TOTAL_Y - 20 * mm - off, 'TOTAL')
-    cv.setFillColor(C_ACCENT2)
-    cv.setFont('Helvetica-Bold', 13)
-    cv.drawRightString(TX + TOTAL_W - 5 * mm, TOTAL_Y - 20 * mm - off, f'Rs. {total:,.0f}')
-
-    draw_rounded_rect(cv, TX + 5 * mm, TOTAL_Y - 29 * mm - off, 22 * mm, 7 * mm, 3 * mm,
-                      fc=colors.HexColor('#fee2e2'))
-    cv.setFillColor(colors.HexColor('#991b1b'))
-    cv.setFont('Helvetica-Bold', 8)
-    cv.drawCentredString(TX + 16 * mm, TOTAL_Y - 25.5 * mm - off, 'UNPAID')
-
-    # ════════ 5. NOTE ════════
-    NOTE_Y = TOTAL_Y - TOTAL_H - 7 * mm
-    draw_rounded_rect(cv, M, NOTE_Y - 16 * mm, CW * 0.6, 16 * mm, 2 * mm,
-                      fc=colors.HexColor('#eff6ff'), sc=colors.HexColor('#bfdbfe'), lw=0.5)
-    cv.setFillColor(C_ACCENT)
-    cv.setFont('Helvetica-Bold', 7.5)
-    cv.drawString(M + 5 * mm, NOTE_Y - 6 * mm, 'NOTE')
-    cv.setFillColor(C_TEXT)
-    cv.setFont('Helvetica', 8.5)
-    cv.drawString(M + 5 * mm, NOTE_Y - 12 * mm, 'Thank You')
-
-    # ════════ 6. FOOTER ════════
-    cv.setFillColor(C_DARK)
-    cv.rect(0, 0, W, 12 * mm, fill=1, stroke=0)
-    cv.setFillColor(C_ACCENT)
-    cv.rect(0, 0, 4 * mm, 12 * mm, fill=1, stroke=0)
-    cv.setFillColor(colors.HexColor('#475569'))
-    cv.setFont('Helvetica', 7.5)
-    cv.drawString(M, 4.5 * mm, f'{company_name} — All rights reserved.')
-    cv.setFillColor(C_ACCENT2)
-    cv.drawRightString(W - M, 4.5 * mm,
-                       f'Prepared by: {request.user.username}  |  Powered by Invoice Shop')
-
-    cv.save()
-    buf.seek(0)
-    response = HttpResponse(buf, content_type='application/pdf')
+    invoice = get_object_or_404(
+        Invoice.objects.prefetch_related('items', 'payments'),
+        pk=pk,
+        user=request.user,
+    )
+    pdf_bytes = build_invoice_pdf(invoice, request.user)
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="Invoice_{invoice.invoice_number}.pdf"'
     return response
 
@@ -666,19 +473,21 @@ def build_report_data(user, year):
     invoices = list(
         Invoice.objects
         .filter(user=user, created_at__year=year)
-        .prefetch_related('items')
+        .prefetch_related('items', 'payments')
         .order_by('-created_at')
     )
 
     monthly_revenue = [Decimal('0')] * 12
     monthly_count = [0] * 12
     customers = {}
+    total_outstanding = Decimal('0')
 
     for inv in invoices:
         idx = timezone.localtime(inv.created_at).month - 1
         total = inv.total_amount()
         monthly_revenue[idx] += total
         monthly_count[idx] += 1
+        total_outstanding += inv.balance_due()
 
         c = customers.setdefault(
             inv.customer_name,
@@ -706,6 +515,7 @@ def build_report_data(user, year):
         'monthly_revenue': monthly_revenue,
         'monthly_count': monthly_count,
         'total_revenue': total_revenue,
+        'total_outstanding': total_outstanding,
         'total_invoices': total_invoices,
         'avg_invoice': avg_invoice,
         'top_customers': top_customers,
@@ -744,6 +554,7 @@ def monthly_report(request):
         'selected_year': selected_year,
         'available_years': available_years,
         'total_revenue': data['total_revenue'],
+        'total_outstanding': data['total_outstanding'],
         'total_invoices': data['total_invoices'],
         'avg_invoice': data['avg_invoice'],
         'best_month': best_month,
@@ -817,7 +628,7 @@ def report_pdf(request):
         ('TOTAL REVENUE', f'Rs. {total_revenue:,.0f}', CA),
         ('TOTAL INVOICES', str(total_invoices), CGR),
         ('AVG INVOICE', f'Rs. {avg_invoice:,.0f}', colors.HexColor('#f59e0b')),
-        ('YEAR', str(selected_year), CMU),
+        ('OUTSTANDING', f'Rs. {float(data["total_outstanding"]):,.0f}', colors.HexColor('#ef4444')),
     ]
     sw = (CW - 9 * mm) / 4
     for i, (lbl, val, col) in enumerate(stats):
@@ -945,23 +756,14 @@ def report_pdf(request):
 # ═══════════════════════════════════════════════════════════
 @login_required
 def upload_payment_proof(request):
-    from django.contrib import messages
-
     if request.method == "POST":
         invoice_id = request.POST.get("invoice_id")
         proof_image = request.FILES.get("proof_image")
         payment_method = request.POST.get("payment_method", "").strip()
         transaction_id = request.POST.get("transaction_id", "").strip()
 
-        print("POST DATA:", request.POST)
-        print("Logged-in user ID:", request.user.id)
-        print("Received invoice_id:", request.POST.get("invoice_id"))
-        # Only allow the logged-in user's invoices.
-        invoice = get_object_or_404(
-            Invoice,
-            pk=invoice_id,
-            user=request.user,
-        )
+        # Sirf logged-in user ke apne invoices allowed hain
+        invoice = get_object_or_404(Invoice, pk=invoice_id, user=request.user)
 
         PaymentProof.objects.create(
             invoice=invoice,
@@ -974,32 +776,28 @@ def upload_payment_proof(request):
         return redirect("upload_payment_proof")
 
     invoices = Invoice.objects.filter(user=request.user).order_by("-created_at")
-
-    proofs = PaymentProof.objects.filter(
-        invoice__user=request.user
-    ).select_related("invoice").order_by("-uploaded_at")
-
-    return render(
-        request,
-        "invoices/upload_payment_proof.html",
-        {
-            "invoices": invoices,
-            "proofs": proofs,
-        },
+    proofs = (
+        PaymentProof.objects
+        .filter(invoice__user=request.user)
+        .select_related("invoice")
+        .order_by("-uploaded_at")
     )
 
+    return render(request, "invoices/upload_payment_proof.html", {
+        "invoices": invoices,
+        "proofs": proofs,
+    })
 
-from .models import (
-    CompanyProfile,
-    Invoice,
-    InvoiceItem,
-    PaymentProof,
-    UserProduct,
-)
+
 @login_required
-def download_pdf(request, pk):
-    invoice = get_object_or_404(Invoice, pk=pk, user=request.user)
-    pdf_bytes = build_invoice_pdf(invoice, request.user)
-    response = HttpResponse(pdf_bytes, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="Invoice_{invoice.invoice_number}.pdf"'
-    return response
+def invoice_detail(request, pk):
+    invoice = get_object_or_404(
+        Invoice.objects.prefetch_related('items', 'payments'),
+        pk=pk,
+        user=request.user,
+    )
+    company_profile = CompanyProfile.objects.filter(user=invoice.user).first()
+    return render(request, 'invoices/invoice_detail.html', {
+        'invoice': invoice,
+        'company_profile': company_profile,
+    })

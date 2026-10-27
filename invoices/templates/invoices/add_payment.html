@@ -1,0 +1,58 @@
+{% extends 'invoices/base.html' %}
+{% block title %}Add Payment — {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Add payment</h1>
+    <p class="page-subtitle">{{ invoice.invoice_number }} &middot; {{ invoice.customer_name }}</p>
+  </div>
+  <div class="actions">
+    <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-outline"><svg class="i"><use href="#i-back"/></svg>Back</a>
+  </div>
+</header>
+
+<article class="bill" style="max-width:560px">
+  <div class="pay-summary" style="margin:0 0 20px 0;max-width:none">
+    <div class="pay-row"><span>Grand total</span><strong>Rs. {{ invoice.total_amount|floatformat:"2g" }}</strong></div>
+    <div class="pay-row"><span>Already paid</span><span>Rs. {{ invoice.amount_paid|floatformat:"2g" }}</span></div>
+    <div class="pay-row pay-balance"><span>Balance due</span><strong>Rs. {{ invoice.balance_due|floatformat:"2g" }}</strong></div>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <p style="color:#ef4444">{{ form.non_field_errors }}</p>
+    {% endif %}
+
+    <div style="margin-bottom:14px">
+      <label for="{{ form.amount.id_for_label }}">Amount received (Rs.) *</label>
+      {{ form.amount }}
+      {% for e in form.amount.errors %}<small style="color:#ef4444;display:block">{{ e }}</small>{% endfor %}
+    </div>
+
+    <div style="margin-bottom:14px">
+      <label for="{{ form.payment_method.id_for_label }}">Payment method</label>
+      {{ form.payment_method }}
+      {% for e in form.payment_method.errors %}<small style="color:#ef4444;display:block">{{ e }}</small>{% endfor %}
+    </div>
+
+    <div style="margin-bottom:18px">
+      <label for="{{ form.note.id_for_label }}">Note</label>
+      {{ form.note }}
+      {% for e in form.note.errors %}<small style="color:#ef4444;display:block">{{ e }}</small>{% endfor %}
+    </div>
+
+    <div class="actions">
+      <button type="submit" class="btn btn-success">Save payment</button>
+      <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</article>
+
+<style>
+  .bill form input,.bill form select,.bill form textarea{width:100%;box-sizing:border-box}
+  .bill form label{display:block;margin-bottom:6px;font-weight:600}
+</style>
+{% endblock %}

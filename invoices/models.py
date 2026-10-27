@@ -5,15 +5,13 @@ from django.db import models
 
 
 class PaymentProof(models.Model):
-    
     invoice = models.ForeignKey(
-    "Invoice",
-    on_delete=models.CASCADE,
-    related_name="payment_proofs",
-    null=True,
-    blank=True,
- )
-
+        "Invoice",
+        on_delete=models.CASCADE,
+        related_name="payment_proofs",
+        null=True,
+        blank=True,
+    )
     payment_method = models.CharField(max_length=100, blank=True)
     transaction_id = models.CharField(max_length=255, blank=True)
     proof_image = models.ImageField(
@@ -24,7 +22,8 @@ class PaymentProof(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Payment proof for {self.invoice.invoice_number}"
+        number = self.invoice.invoice_number if self.invoice else "no invoice"
+        return f"Payment proof for {number}"
 
 
 class UserProduct(models.Model):
@@ -36,7 +35,7 @@ class UserProduct(models.Model):
     product_name = models.CharField(max_length=255)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
- 
+
     def __str__(self):
         return self.product_name
 
@@ -106,8 +105,49 @@ class Invoice(models.Model):
         """Return the final payable amount for PDF and invoice totals."""
         return self.grand_total()
 
+    def amount_paid(self):
+        """Total of all payments received against this invoice."""
+        return sum(
+            (p.amount for p in self.payments.all()),
+            Decimal("0.00"),
+        ).quantize(Decimal("0.01"))
+
+    def balance_due(self):
+        """Remaining amount to be paid (never negative)."""
+        return max(
+            self.grand_total() - self.amount_paid(),
+            Decimal("0.00"),
+        ).quantize(Decimal("0.01"))
+
+    def payment_status(self):
+        """Return 'unpaid', 'partial' or 'paid'."""
+        paid = self.amount_paid()
+        if paid <= 0:
+            return "unpaid"
+        if self.balance_due() <= 0:
+            return "paid"
+        return "partial"
+
     def __str__(self):
         return self.invoice_number
+
+
+class Payment(models.Model):
+    invoice = models.ForeignKey(
+        Invoice,
+        on_delete=models.CASCADE,
+        related_name="payments",
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_method = models.CharField(max_length=100, blank=True)
+    note = models.CharField(max_length=255, blank=True)
+    paid_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-paid_at"]
+
+    def __str__(self):
+        return f"{self.amount} for {self.invoice.invoice_number}"
 
 
 class InvoiceItem(models.Model):
